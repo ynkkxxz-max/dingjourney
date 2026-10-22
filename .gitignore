@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Database
+*.db
+*.sqlite3
+
+# Logs & Tunnel state
+*.log
+tunnel.log
+tunnel_url.txt
+
+# Executables
+bin/*.exe
+
+# Environment
+.env
+.venv/
+env/
+venv/
