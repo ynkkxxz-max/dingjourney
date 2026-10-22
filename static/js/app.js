@@ -29,8 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
 async function initApp() {
   setupEventListeners();
   setupYearDropdown();
-  await loadConfig();
+  // Fetch stats and trades immediately in parallel
   await refreshDashboard();
+  loadConfig();
   checkMT5LiveStatus();
 }
 
@@ -198,20 +199,24 @@ async function refreshDashboard() {
   try {
     const filterParam = state.accountFilter !== 'ALL' ? `&account_type=${state.accountFilter}` : '';
 
-    // 1. Fetch Stats
-    const statsRes = await fetch(`/api/stats?year=${state.currentYear}&month=${state.currentMonth}${filterParam}`);
-    state.stats = await statsRes.json();
+    // Fetch Stats & Trades in parallel for 2x faster load
+    const [statsRes, tradesRes] = await Promise.all([
+      fetch(`/api/stats?year=${state.currentYear}&month=${state.currentMonth}${filterParam}`),
+      fetch(`/api/trades?year=${state.currentYear}&month=${state.currentMonth}${filterParam}`)
+    ]);
+
+    const [statsData, tradesData] = await Promise.all([
+      statsRes.json(),
+      tradesRes.json()
+    ]);
+
+    state.stats = statsData;
     renderKpis();
 
-    // 2. Fetch Trades
-    const tradesRes = await fetch(`/api/trades?year=${state.currentYear}&month=${state.currentMonth}${filterParam}`);
-    const tradesData = await tradesRes.json();
     state.trades = tradesData.trades || [];
-
-    // 3. Render Calendar
     renderCalendar();
 
-    // 4. Update Header indicators
+    // Update Header indicators
     const monthName = MONTH_NAMES[state.currentMonth - 1];
     document.getElementById('calendarMonthTitle').textContent = `${monthName} ${state.currentYear}`;
     document.getElementById('brandBadgeYear').textContent = state.currentYear;
@@ -561,7 +566,11 @@ async function deleteTradeItem(tradeId) {
 // MT5 Real-time status checker
 async function checkMT5LiveStatus() {
   try {
-    const res = await fetch('/api/mt5/status');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2500);
+    const res = await fetch('/api/mt5/status', { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!res.ok) return;
     const data = await res.json();
     const statusText = document.getElementById('mt5StatusText');
     const pulseDot = document.getElementById('mt5PulseDot');
@@ -585,7 +594,7 @@ async function checkMT5LiveStatus() {
       pulseDot.style.boxShadow = 'none';
     }
   } catch (err) {
-    // API starting or offline
+    // API starting, timeout, or offline
   }
 }
 
