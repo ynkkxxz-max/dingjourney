@@ -92,6 +92,14 @@ def init_db():
         cursor.execute("INSERT INTO config (key, value) VALUES ('account_type', 'REAL')")
         cursor.execute("INSERT INTO config (key, value) VALUES ('currency', '$')")
 
+    # Seed Sync PIN & Bound Target Account
+    cursor.execute("SELECT value FROM config WHERE key = 'sync_pin'")
+    if not cursor.fetchone():
+        cursor.execute("INSERT INTO config (key, value) VALUES ('sync_pin', 'JN-8899')")
+    cursor.execute("SELECT value FROM config WHERE key = 'target_account'")
+    if not cursor.fetchone():
+        cursor.execute("INSERT INTO config (key, value) VALUES ('target_account', '')")
+
     # Seed sample trades matching the screenshot if no trades exist yet
     cursor.execute("SELECT COUNT(*) as count FROM trades")
     if cursor.fetchone()["count"] == 0:
@@ -165,9 +173,15 @@ def insert_or_update_trade(trade: Dict[str, Any]) -> int:
     close_time = trade.get("close_time", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     close_date = trade.get("close_date") or close_time.split(" ")[0]
     
-    ticket = str(trade.get("ticket") or int(datetime.now().timestamp() * 1000))
+    raw_ticket = str(trade.get("ticket") or int(datetime.now().timestamp() * 1000)).strip()
     account_type = str(trade.get("account_type", "REAL")).upper()
-    account_number = str(trade.get("account_number", ""))
+    account_number = str(trade.get("account_number", "")).strip()
+    
+    # Composite ticket identifier to isolate across different MT5 accounts
+    if account_number and not raw_ticket.startswith(f"{account_number}_"):
+        ticket = f"{account_number}_{raw_ticket}"
+    else:
+        ticket = raw_ticket
     
     cursor.execute("""
     INSERT INTO trades (ticket, symbol, trade_type, lots, open_price, close_price, open_time, close_time, close_date, profit, commission, swap, comment, source, account_type, account_number)
