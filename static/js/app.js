@@ -364,13 +364,20 @@ function renderCalendar() {
   }
 
   // Render active month days
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
   for (let day = 1; day <= totalDays; day++) {
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const dayTrades = tradesByDate[dateStr] || [];
+    const isToday = (dateStr === todayStr);
     
     const cell = document.createElement('div');
     cell.className = 'day-cell';
     cell.dataset.date = dateStr;
+    if (isToday) cell.classList.add('today-cell');
+
+    const todayTag = isToday ? '<span class="today-indicator-tag">TODAY</span>' : '';
 
     if (dayTrades.length > 0) {
       // Trades exist for this day!
@@ -385,7 +392,10 @@ function renderCalendar() {
 
       cell.innerHTML = `
         <div class="day-cell-top">
-          <span class="trade-count-label">Trades: ${dayTrades.length}</span>
+          <div style="display: flex; align-items: center; gap: 5px;">
+            ${todayTag}
+            <span class="trade-count-label">Trades: ${dayTrades.length}</span>
+          </div>
           <div class="day-badge">${day}</div>
         </div>
         <div class="day-cell-center">
@@ -398,7 +408,8 @@ function renderCalendar() {
     } else {
       // Empty / No trade day
       cell.innerHTML = `
-        <div class="day-cell-top" style="justify-content: flex-end;">
+        <div class="day-cell-top" style="justify-content: space-between;">
+          ${todayTag || '<div></div>'}
           <span class="day-plain-number">${day}</span>
         </div>
         <div class="day-cell-center">
