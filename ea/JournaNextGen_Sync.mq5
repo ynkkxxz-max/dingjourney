@@ -8,8 +8,9 @@
 #property version   "1.00"
 #property description "Auto-syncs closed trades instantly to Journa NextGen Dashboard whenever a trade is closed"
 
+input string   InpSyncPin             = "JN-8899";                                // Secret Sync PIN (Match your Dashboard PIN)
 input string   InpWebhookUrl          = "http://127.0.0.1:8000/api/mt5/webhook"; // Webhook URL (Local or Cloudflare)
-input int      InpSyncIntervalSeconds = 10;                                       // Backup Sync Interval (Seconds)
+input int      InpSyncIntervalSeconds = 15;                                       // Backup Sync Interval (Seconds)
 input bool     InpInstantSyncOnDeal   = true;                                     // Instant sync on BUY/SELL close
 
 datetime g_lastSyncTime = 0;
@@ -21,6 +22,7 @@ ulong    g_lastSyncedTicket = 0;
 int OnInit()
 {
    Print("Journa NextGen Real-Time Sync EA started.");
+   Print("Sync PIN: ", InpSyncPin);
    Print("Webhook Endpoint: ", InpWebhookUrl);
    EventSetTimer(InpSyncIntervalSeconds);
    SyncClosedTrades(30); // Sync past 30 days on launch
@@ -115,7 +117,18 @@ void SyncClosedTrades(int daysBack)
 
    if(addedCount > 0)
    {
-      string payload = "{\"trades\":" + jsonArray + "}";
+      long accLogin = AccountInfoInteger(ACCOUNT_LOGIN);
+      string accBroker = AccountInfoString(ACCOUNT_COMPANY);
+      string accCurrency = AccountInfoString(ACCOUNT_CURRENCY);
+      double accBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+      double accEquity = AccountInfoDouble(ACCOUNT_EQUITY);
+      long accMode = AccountInfoInteger(ACCOUNT_TRADE_MODE);
+      string accType = (accMode == ACCOUNT_TRADE_MODE_REAL) ? "REAL" : "DEMO";
+
+      string payload = StringFormat(
+         "{\"sync_pin\":\"%s\",\"account_number\":\"%I64d\",\"broker\":\"%s\",\"currency\":\"%s\",\"balance\":%.2f,\"equity\":%.2f\",\"account_type\":\"%s\",\"trades\":%s}",
+         InpSyncPin, accLogin, accBroker, accCurrency, accBalance, accEquity, accType, jsonArray
+      );
       SendHttpPost(payload);
    }
 }
