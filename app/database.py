@@ -243,36 +243,56 @@ def get_stats(year: Optional[int] = None, month: Optional[int] = None, account_t
     trades = get_trades(year=year, month=month, account_type=account_type)
     all_year_trades = get_trades(year=year, account_type=account_type) if year else trades
     config = get_config()
-    
     starting_capital = float(config.get("starting_capital", 10000.0))
     
-    # Calculate stats for the selected period (month or year)
-    total_trades = len(trades)
+    # 1. Day-based Evaluation: Each trading day counts as 1 unit
+    # (e.g. 7 positions on same day with net loss = 1 Loss (1L))
+    day_pnl_map = {}
+    for t in trades:
+        date_key = t["close_date"]
+        day_pnl_map[date_key] = day_pnl_map.get(date_key, 0.0) + float(t["profit"])
+    
+    total_days_count = len(day_pnl_map)
+    winning_days = [p for p in day_pnl_map.values() if p > 0]
+    losing_days = [p for p in day_pnl_map.values() if p < 0]
+    breakeven_days = [p for p in day_pnl_map.values() if p == 0]
+    
+    wins_count = len(winning_days)
+    losses_count = len(losing_days)
+    be_count = len(breakeven_days)
+    
+    # Financial metrics across all individual trades
     winning_trades = [t for t in trades if t["profit"] > 0]
     losing_trades = [t for t in trades if t["profit"] < 0]
-    breakeven_trades = [t for t in trades if t["profit"] == 0]
-    
-    wins_count = len(winning_trades)
-    losses_count = len(losing_trades)
-    be_count = len(breakeven_trades)
-    
     gross_win = sum(t["profit"] for t in winning_trades)
     gross_loss = abs(sum(t["profit"] for t in losing_trades))
     net_pnl = gross_win - gross_loss
     
-    win_rate = (wins_count / total_trades * 100) if total_trades > 0 else 0.0
+    # Win rate based on Trading Days
+    win_rate = (wins_count / total_days_count * 100) if total_days_count > 0 else 0.0
     profit_factor = (gross_win / gross_loss) if gross_loss > 0 else (gross_win if gross_win > 0 else 0.0)
     
-    # ROI & Balance
+    # ROI & Live Balance
     pnl_percentage = (net_pnl / starting_capital * 100) if starting_capital > 0 else 0.0
     current_balance = starting_capital + net_pnl
+
+    conn = get_db_connection()
+    mt5_row = conn.execute("SELECT balance, equity FROM mt5_account WHERE id = 1").fetchone()
+    conn.close()
+    if mt5_row and mt5_row["balance"] is not None:
+        current_balance = float(mt5_row["balance"])
     
-    # Annual Stats
-    annual_wins = [t for t in all_year_trades if t["profit"] > 0]
-    annual_losses = [t for t in all_year_trades if t["profit"] < 0]
+    # Annual Stats (Day-based evaluation as well)
+    annual_day_pnl_map = {}
+    for t in all_year_trades:
+        date_key = t["close_date"]
+        annual_day_pnl_map[date_key] = annual_day_pnl_map.get(date_key, 0.0) + float(t["profit"])
+    
+    annual_wins = [p for p in annual_day_pnl_map.values() if p > 0]
+    annual_losses = [p for p in annual_day_pnl_map.values() if p < 0]
     annual_net_pnl = sum(t["profit"] for t in all_year_trades)
-    annual_orders = len(all_year_trades)
-    annual_wr = (len(annual_wins) / annual_orders * 100) if annual_orders > 0 else 0.0
+    annual_days = len(annual_day_pnl_map)
+    annual_wr = (len(annual_wins) / annual_days * 100) if annual_days > 0 else 0.0
     annual_roi = (annual_net_pnl / starting_capital * 100) if starting_capital > 0 else 0.0
     
     return {
@@ -280,7 +300,8 @@ def get_stats(year: Optional[int] = None, month: Optional[int] = None, account_t
         "current_balance": current_balance,
         "net_pnl": net_pnl,
         "pnl_percentage": pnl_percentage,
-        "total_trades": total_trades,
+        "total_trades": total_days_count, # Total trading days
+        "total_positions": len(trades),
         "wins": wins_count,
         "losses": losses_count,
         "breakeven": be_count,
@@ -293,7 +314,7 @@ def get_stats(year: Optional[int] = None, month: Optional[int] = None, account_t
         # Annual breakdown
         "annual_net_pnl": annual_net_pnl,
         "annual_roi": round(annual_roi, 1),
-        "annual_orders": annual_orders,
+        "annual_orders": annual_days,
         "annual_wins": len(annual_wins),
         "annual_losses": len(annual_losses),
         "annual_win_rate": round(annual_wr, 1)
