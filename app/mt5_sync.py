@@ -207,11 +207,11 @@ def sync_active_terminal(days_back: int = 180, target_account: Optional[str] = N
         if err and len(err) > 0 and err[0] == -6:
             return {
                 "success": False,
-                "error": "MT5 លើ PC មិនទាន់ Login ជាប់នៅឡើយទេ! សូមបើកកម្មវិធី MT5 លើកុំព្យូទ័រ -> File -> Login to Trade Account -> ធីកលើ 'Save password' រួចចុច Connect ម្ដងទៀត។"
+                "error": "MT5 is not logged in. Please open MetaTrader 5 on your PC -> File -> Login to Trade Account -> check 'Save password', and try again."
             }
         return {
             "success": False,
-            "error": f"មិនអាចភ្ជាប់ទៅកាន់ MT5 បានទេ ({err})។ សូមប្រាកដថាកម្មវិធី MetaTrader 5 កំពុងបើកនៅលើកុំព្យូទ័រ Windows របស់អ្នក។"
+            "error": f"Could not connect to MT5 terminal ({err}). Please ensure MetaTrader 5 is running on your PC."
         }
 
     account = mt5.account_info()
@@ -220,7 +220,7 @@ def sync_active_terminal(days_back: int = 180, target_account: Optional[str] = N
         mt5.shutdown()
         return {
             "success": False,
-            "error": "កម្មវិធី MT5 កំពុងបើកពិតមែន តែមិនទាន់មានគណនី Login ឡើយ។ សូម Login ចូលគណនីរបស់អ្នកក្នុង MT5 ជាមុនសិន។"
+            "error": "MT5 is running, but no account is logged in. Please log in to your trading account in MT5 first."
         }
 
     # 3. Target Account Collision Check
@@ -230,7 +230,7 @@ def sync_active_terminal(days_back: int = 180, target_account: Optional[str] = N
         mt5.shutdown()
         return {
             "success": False,
-            "error": f"⚠️ MT5 កំពុងដំណើរការគណនី [{current_login}] ({account.company}) ដែលខុសពីលេខសម្គាល់គណនីគោលដៅ [{expected_target}] របស់អ្នក! សូមប្តូរចូលគណនីឱ្យបានត្រឹមត្រូវសិន ដើម្បីការពារកុំឱ្យជាន់ទិន្នន័យគ្នា។",
+            "error": f"⚠️ Active MT5 is logged into Account [{current_login}] ({account.company}), which differs from your target account [{expected_target}]. Please switch to the correct account to prevent data conflicts.",
             "detected_account": current_login,
             "target_account": expected_target
         }
