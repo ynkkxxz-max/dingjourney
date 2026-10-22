@@ -84,7 +84,7 @@ class MT5SyncModel(BaseModel):
     sync_pin: Optional[str] = None
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "ok", "app": "Journa NextGen", "timestamp": str(os.getenv("RENDER_GIT_COMMIT", "live"))}
 
@@ -298,7 +298,7 @@ def download_ea(filename: str):
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def serve_index():
     index_file = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_file):
