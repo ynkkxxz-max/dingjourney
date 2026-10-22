@@ -72,12 +72,16 @@ class ConfigModel(BaseModel):
     account_name: Optional[str] = None
     account_type: Optional[str] = None
     currency: Optional[str] = None
+    sync_pin: Optional[str] = None
+    target_account: Optional[str] = None
 
 class MT5SyncModel(BaseModel):
     days_back: Optional[int] = 180
     login: Optional[int] = None
     password: Optional[str] = None
     server: Optional[str] = None
+    target_account: Optional[str] = None
+    sync_pin: Optional[str] = None
 
 
 @app.get("/api/status")
@@ -105,6 +109,10 @@ def api_save_config(config: ConfigModel):
         set_config("account_type", config.account_type)
     if config.currency is not None:
         set_config("currency", config.currency)
+    if config.sync_pin is not None:
+        set_config("sync_pin", config.sync_pin.strip())
+    if config.target_account is not None:
+        set_config("target_account", config.target_account.strip())
     return {"success": True, "config": get_config()}
 
 
@@ -169,26 +177,71 @@ def api_mt5_login(creds: MT5LoginModel):
 
 @app.post("/api/mt5/sync")
 def api_mt5_sync(body: MT5SyncModel):
-    result = sync_active_terminal(days_back=body.days_back or 180)
+    result = sync_active_terminal(
+        days_back=body.days_back or 180,
+        target_account=body.target_account,
+        sync_pin=body.sync_pin
+    )
     return result
 
 
 @app.post("/api/mt5/webhook")
 def api_mt5_webhook(payload: Dict[str, Any]):
     """
-    Webhook endpoint for MetaTrader 5 Expert Advisor (DingJourney_Sync.mq5).
-    Receives trade events in real-time.
+    Webhook endpoint for MetaTrader 5 Expert Advisor (JournaNextGen_Sync.mq5).
+    Verifies Secret Sync PIN & Target Account to prevent cross-account collisions.
     """
+    # 1. Verify Secret Sync PIN
+    saved_pin = get_config().get("sync_pin", "JN-8899").strip()
+    received_pin = str(payload.get("sync_pin") or payload.get("pin") or "").strip()
+    if not received_pin or received_pin != saved_pin:
+        raise HTTPException(
+            status_code=401,
+            detail=f"Secret Sync PIN មិនត្រឹមត្រូវឡើយ! (Invalid Sync PIN). Please verify the PIN in your MT5 EA settings."
+        )
+
+    # 2. Check Target Account if specified
+    saved_target = get_config().get("target_account", "").strip()
+    account_number = str(payload.get("account_number") or "").strip()
+    if saved_target and account_number and saved_target != account_number:
+        raise HTTPException(
+            status_code=403,
+            detail=f"គណនី MT5 [{account_number}] មិនត្រូវនឹងគណនីគោលដៅ [{saved_target}] ឡើយ! ត្រូវបានបដិសេធដើម្បីកុំឱ្យជាន់ទិន្នន័យគ្នា។"
+        )
+
     try:
-        # Handles single trade or list of trades
         trades_data = payload.get("trades", [payload]) if "trades" in payload else [payload]
         count = 0
+        account_type = str(payload.get("account_type", "REAL")).upper()
         for t in trades_data:
             if "symbol" in t and "profit" in t:
                 t["source"] = "mt5_ea"
+                if "account_type" not in t:
+                    t["account_type"] = account_type
+                if "account_number" not in t and account_number:
+                    t["account_number"] = account_number
                 insert_or_update_trade(t)
                 count += 1
-        return {"success": True, "saved_trades": count}
+                
+        # Also update account balance if provided by EA
+        if payload.get("balance"):
+            conn = get_db_connection()
+            conn.execute("""
+            INSERT OR REPLACE INTO mt5_account (id, account_number, broker, currency, balance, equity, account_type, last_sync)
+            VALUES (1, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                account_number,
+                payload.get("broker", "MT5 EA"),
+                payload.get("currency", "USD"),
+                float(payload.get("balance", 0.0)),
+                float(payload.get("equity", payload.get("balance", 0.0))),
+                account_type,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            ))
+            conn.commit()
+            conn.close()
+
+        return {"success": True, "saved_trades": count, "account_number": account_number}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -226,6 +279,15 @@ async def api_import_statement(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to parse file: {str(e)}")
 
+
+EA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "ea")
+
+@app.get("/api/download/ea/{filename}")
+def download_ea(filename: str):
+    file_path = os.path.join(EA_DIR, filename)
+    if os.path.exists(file_path):
+        return FileResponse(file_path, filename=filename, media_type="application/octet-stream")
+    raise HTTPException(status_code=404, detail="EA file not found")
 
 # Serve Static files & PWA
 if os.path.exists(STATIC_DIR):
