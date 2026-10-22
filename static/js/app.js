@@ -21,22 +21,52 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December"
 ];
 
-// Document Ready
-document.addEventListener('DOMContentLoaded', () => {
+// Safe listener helper to prevent any null reference exceptions
+function addListener(id, event, handler) {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener(event, handler);
+    return true;
+  }
+  return false;
+}
+
+// Document Ready - execute immediately if DOM is already ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+  });
+} else {
   initApp();
-});
+}
 
 async function initApp() {
-  setupEventListeners();
-  setupYearDropdown();
+  try {
+    setupEventListeners();
+  } catch (e) {
+    console.error('Setup listeners notice:', e);
+  }
+
+  try {
+    setupYearDropdown();
+  } catch (e) {
+    console.error('Year dropdown notice:', e);
+  }
+
   // Fetch stats and trades immediately in parallel
-  await refreshDashboard();
+  try {
+    await refreshDashboard();
+  } catch (e) {
+    console.error('Dashboard refresh notice:', e);
+  }
+
   loadConfig();
   checkMT5LiveStatus();
 }
 
 function setupYearDropdown() {
   const yearSelect = document.getElementById('yearSelect');
+  if (!yearSelect) return;
   yearSelect.innerHTML = '';
   for (let y = 2024; y <= 2030; y++) {
     const opt = document.createElement('option');
@@ -88,44 +118,46 @@ function setupEventListeners() {
   }
 
   // Month & Year changes
-  document.getElementById('monthSelect').addEventListener('change', (e) => {
+  addListener('monthSelect', 'change', (e) => {
     state.currentMonth = parseInt(e.target.value);
     refreshDashboard();
   });
 
-  document.getElementById('yearSelect').addEventListener('change', (e) => {
+  addListener('yearSelect', 'change', (e) => {
     state.currentYear = parseInt(e.target.value);
     refreshDashboard();
   });
 
   // Add Trade Modal Open & Close
-  document.getElementById('btnAddTrade').addEventListener('click', () => {
+  addListener('btnAddTrade', 'click', () => {
     openAddTradeModal();
   });
 
-  document.getElementById('closeAddTradeModal').addEventListener('click', () => {
+  addListener('closeAddTradeModal', 'click', () => {
     closeModal('addTradeModal');
   });
 
   // Refresh Button
-  document.getElementById('btnRefresh').addEventListener('click', async () => {
+  addListener('btnRefresh', 'click', async () => {
     showToast('Refreshing data...', 'info');
     await refreshDashboard();
     showToast('Dashboard up to date!', 'success');
   });
 
   // Edit Capital Button
-  document.getElementById('btnEditCapital').addEventListener('click', () => {
-    document.getElementById('capitalInput').value = state.stats.starting_capital || 10000;
+  addListener('btnEditCapital', 'click', () => {
+    const capInput = document.getElementById('capitalInput');
+    if (capInput) capInput.value = state.stats.starting_capital || 10000;
     openModal('capitalModal');
   });
 
-  document.getElementById('closeCapitalModal').addEventListener('click', () => {
+  addListener('closeCapitalModal', 'click', () => {
     closeModal('capitalModal');
   });
 
-  document.getElementById('btnSaveCapital').addEventListener('click', async () => {
-    const newCapital = parseFloat(document.getElementById('capitalInput').value);
+  addListener('btnSaveCapital', 'click', async () => {
+    const capInput = document.getElementById('capitalInput');
+    const newCapital = capInput ? parseFloat(capInput.value) : NaN;
     if (!isNaN(newCapital) && newCapital > 0) {
       await fetch('/api/config', {
         method: 'POST',
@@ -139,26 +171,26 @@ function setupEventListeners() {
   });
 
   // Trade Type Selector (BUY / SELL)
-  document.getElementById('btnTypeBuy').addEventListener('click', () => {
+  addListener('btnTypeBuy', 'click', () => {
     setTradeType('BUY');
   });
-  document.getElementById('btnTypeSell').addEventListener('click', () => {
+  addListener('btnTypeSell', 'click', () => {
     setTradeType('SELL');
   });
 
   // Submit Trade Form
-  document.getElementById('addTradeForm').addEventListener('submit', async (e) => {
+  addListener('addTradeForm', 'submit', async (e) => {
     e.preventDefault();
     await submitNewTrade();
   });
 
   // Day Details Modal Close
-  document.getElementById('closeDayDetailModal').addEventListener('click', () => {
+  addListener('closeDayDetailModal', 'click', () => {
     closeModal('dayDetailModal');
   });
 
   // Add trade from inside day details modal
-  document.getElementById('btnAddTradeFromDay').addEventListener('click', () => {
+  addListener('btnAddTradeFromDay', 'click', () => {
     closeModal('dayDetailModal');
     openAddTradeModal(state.selectedDate);
   });
