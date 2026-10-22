@@ -193,8 +193,8 @@ function setupMT5Handlers() {
       const sync_pin = syncPinInput ? syncPinInput.value.trim() : '';
 
       btnTriggerSync.disabled = true;
-      btnTriggerSync.textContent = 'Connecting & Verifying MT5...';
-      showToast('Connecting & Verifying MT5...', 'info');
+      btnTriggerSync.textContent = 'Connecting to MT5 Terminal...';
+      showToast('Connecting to MT5...', 'info');
 
       try {
         const res = await fetch('/api/mt5/sync', {
