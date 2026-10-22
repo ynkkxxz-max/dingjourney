@@ -3,9 +3,13 @@
  * 100% Safe: No password required!
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    setupMT5Handlers();
+  });
+} else {
   setupMT5Handlers();
-});
+}
 
 function setupMT5Handlers() {
   const btnMt5Modal = document.getElementById('btnMt5Modal');
