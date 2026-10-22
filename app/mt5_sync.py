@@ -189,13 +189,9 @@ def sync_active_terminal(days_back: int = 180, target_account: Optional[str] = N
     if not MT5_AVAILABLE:
         return {"success": False, "error": "MetaTrader5 module is not installed."}
 
-    # 1. Verify Sync PIN if provided
-    saved_pin = get_config().get("sync_pin", "JN-8899").strip()
-    if sync_pin and sync_pin.strip() != saved_pin:
-        return {
-            "success": False,
-            "error": "❌ លេខកូដសម្ងាត់ Sync PIN មិនត្រឹមត្រូវឡើយ! (Invalid Sync PIN)"
-        }
+    # 1. Update Sync PIN if provided by user
+    if sync_pin and sync_pin.strip():
+        set_config("sync_pin", sync_pin.strip())
 
     # 2. Connect to active terminal (Try without path first to attach to active terminal)
     initialized = mt5.initialize()
@@ -226,18 +222,16 @@ def sync_active_terminal(days_back: int = 180, target_account: Optional[str] = N
     # 3. Target Account Collision Check
     current_login = str(account.login).strip()
     expected_target = (target_account or get_config().get("target_account", "")).strip()
-    if expected_target and current_login != expected_target:
+    # Only check target if it is valid digits (prevents blocking if user accidentally entered a password)
+    if expected_target and expected_target.isdigit() and current_login != expected_target:
         mt5.shutdown()
         return {
             "success": False,
-            "error": f"⚠️ Active MT5 is logged into Account [{current_login}] ({account.company}), which differs from your target account [{expected_target}]. Please switch to the correct account to prevent data conflicts.",
-            "detected_account": current_login,
-            "target_account": expected_target
+            "error": f"Active MT5 terminal is running Account #{current_login} ({account.company}), which differs from your specified target #{expected_target}. Please switch accounts in MT5 or update Target Account in dashboard."
         }
 
-    # Auto-bind target account if not set yet
-    if not expected_target:
-        set_config("target_account", current_login)
+    # Auto-save target account
+    set_config("target_account", current_login)
 
     # Detect whether account is REAL or DEMO
     trade_mode = getattr(account, "trade_mode", 2)
