@@ -12,6 +12,9 @@ if (document.readyState === 'loading') {
 }
 
 function setupMT5Handlers() {
+  // Start automatic real-time sync in background
+  startMT5AutoSync();
+
   const btnMt5Modal = document.getElementById('btnMt5Modal');
   const closeMt5Modal = document.getElementById('closeMt5Modal');
 
@@ -426,4 +429,35 @@ async function refreshMT5ModalStatus() {
   } catch (err) {
     console.error(err);
   }
+}
+
+// Automatic Real-Time MT5 Background Poller
+let autoSyncInterval = null;
+function startMT5AutoSync() {
+  if (autoSyncInterval) return;
+  autoSyncInterval = setInterval(async () => {
+    try {
+      const res = await fetch('/api/mt5/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days_back: 3 })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.synced_trades > 0) {
+          if (typeof refreshDashboard === 'function') {
+            await refreshDashboard();
+          }
+          if (typeof checkMT5LiveStatus === 'function') {
+            checkMT5LiveStatus();
+          }
+          if (typeof showToast === 'function') {
+            showToast(`⚡ ${data.synced_trades} newly closed MT5 trade(s) recorded!`, 'success');
+          }
+        }
+      }
+    } catch (e) {
+      // background polling - silent
+    }
+  }, 7000); // Poll every 7 seconds for instant real-time recording
 }
