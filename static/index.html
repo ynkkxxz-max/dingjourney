@@ -292,13 +292,13 @@
   </div>
 
   <!-- MODAL: MT5 SYNC & INTEGRATION -->
-  <!-- MODAL: MT5 INTEGRATION (CLEAN & MINIMALIST) -->
+  <!-- MODAL: METATRADER 5 INTEGRATION (100% CLEAN & ENGLISH) -->
   <div class="modal-overlay" id="mt5Modal">
     <div class="modal-box" style="max-width: 480px; padding: 26px;">
       <div class="modal-header" style="margin-bottom: 20px; padding-bottom: 14px;">
         <h2 class="modal-title" style="font-size: 18px; display: flex; align-items: center; gap: 8px;">
-          <span style="color: var(--color-profit); font-size: 20px;">⚡</span>
-          MetaTrader 5 Sync
+          <span style="color: #ffb82e; font-size: 20px;">⚡</span>
+          MetaTrader 5 Integration
         </h2>
         <button class="modal-close-btn" id="closeMt5Modal">&times;</button>
       </div>
@@ -314,90 +314,58 @@
         </div>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
           <div>
-            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Account ID</span>
+            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Account:</span>
             <b id="mt5CardAccount" style="font-family: var(--font-mono); color: #f8fafc; font-size: 14px;">-</b>
           </div>
           <div>
-            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Broker</span>
+            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Broker:</span>
             <b id="mt5CardBroker" style="color: #cbd5e1;">-</b>
           </div>
           <div>
-            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Balance</span>
+            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Balance:</span>
             <b style="color: var(--color-profit); font-family: var(--font-mono); font-size: 15px;" id="mt5CardBalance">$0.00</b>
           </div>
           <div>
-            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Equity</span>
+            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Equity:</span>
             <b style="color: #38bdf8; font-family: var(--font-mono); font-size: 15px;" id="mt5CardEquity">$0.00</b>
           </div>
         </div>
       </div>
 
-      <!-- Single Clean Account ID Input -->
-      <div class="form-group" style="margin-bottom: 18px;">
-        <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-          <span>លេខសម្គាល់គណនី MT5 (Account ID)</span>
-          <span style="font-size: 11px; color: var(--color-profit); text-transform: none; font-weight: 500;">✓ ការពារកុំឱ្យជាន់គ្នា</span>
-        </label>
-        <div style="position: relative; display: flex; align-items: center;">
-          <span style="position: absolute; left: 14px; color: var(--text-muted); font-family: var(--font-mono); font-weight: 700; font-size: 15px;">#</span>
-          <input type="text" class="form-input" id="targetAccountInput" placeholder="បញ្ចូលលេខ Account MT5 របស់អ្នក (ឧ. 10013164375)" style="padding-left: 34px; font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.5px;">
-        </div>
-        <span style="font-size: 11px; color: var(--text-muted); margin-top: 5px; display: block; line-height: 1.4;">
-          Journa NextGen នឹង Sync តែគណនីលេខនេះប៉ុណ្ណោះ ទោះបីបើក MT5 ច្រើនក៏មិនជាន់គ្នាឡើយ។
-        </span>
-      </div>
-
-      <!-- Hidden Sync PIN for background API safety -->
-      <input type="hidden" id="syncPinInput" value="JN-8899">
-
-      <!-- REAL vs DEMO Account Type Toggle -->
-      <div class="form-group" style="margin-bottom: 22px;">
-        <label class="form-label" style="margin-bottom: 6px;">ប្រភេទគណនី (Account Type)</label>
+      <!-- Account Type Switcher -->
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label class="form-label" style="margin-bottom: 8px;">ACCOUNT TYPE</label>
         <div class="radio-group">
-          <div class="radio-btn buy-active" id="btnModeReal" style="cursor: pointer; padding: 11px; font-size: 13px;">
-            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-profit); display: inline-block; margin-right: 6px;"></span>
+          <div class="radio-btn buy-active" id="btnModeReal" style="cursor: pointer; padding: 12px; font-size: 13px;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-profit); display: inline-block; margin-right: 8px;"></span>
             REAL Account
           </div>
-          <div class="radio-btn" id="btnModeDemo" style="cursor: pointer; padding: 11px; font-size: 13px;">
-            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-gold); display: inline-block; margin-right: 6px;"></span>
+          <div class="radio-btn" id="btnModeDemo" style="cursor: pointer; padding: 12px; font-size: 13px;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-gold); display: inline-block; margin-right: 8px;"></span>
             DEMO Account
           </div>
         </div>
       </div>
 
-      <!-- Big Primary Action Button -->
-      <button class="btn-primary" id="btnTriggerMt5Sync" style="width: 100%; justify-content: center; padding: 14px; font-size: 15px; font-weight: 700; margin-bottom: 14px; box-shadow: 0 4px 18px rgba(0, 229, 153, 0.25);">
-        ⚡ Connect & Sync MT5 Now
+      <!-- Security Notice -->
+      <div style="background: rgba(0, 229, 153, 0.05); border: 1px solid rgba(0, 229, 153, 0.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 18px; font-size: 12px; color: #94a3b8; line-height: 1.6;">
+        🔒 <b>100% Private & Safe:</b> Connects directly to your active Windows MetaTrader 5 terminal without requiring passwords.
+      </div>
+
+      <!-- Primary Action Button -->
+      <button class="btn-primary" id="btnTriggerMt5Sync" style="width: 100%; justify-content: center; padding: 14px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 18px rgba(0, 229, 153, 0.25);">
+        Connect Active MT5 Terminal
       </button>
 
-      <!-- Minimal Bottom Security Note -->
-      <div style="text-align: center; font-size: 11px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 6px;">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-        <span>សុវត្ថិភាពខ្ពស់ 100% — មិនត្រូវការ Password ឡើយ</span>
-      </div>
-
-      <!-- Optional Collapsible for Advanced / File Import (Subtle and Clean) -->
-      <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
-        <button type="button" id="toggleImportSectionBtn" style="background: transparent; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-decoration: underline;">
-          📂 ចង់ Import File Report (HTML/CSV)? ចុចទីនេះ
-        </button>
-
-        <div id="collapsibleImportArea" style="display: none; margin-top: 14px;">
-          <div class="dropzone" id="reportDropzone" style="padding: 18px 12px;">
-            <svg class="dropzone-icon" style="width: 28px; height: 28px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-            </svg>
-            <div style="font-weight: 700; font-size: 13px;">ចុចទីនេះ ឬទម្លាក់ File Report (.html / .csv)</div>
-            <input type="file" id="reportFileInput" accept=".html,.htm,.csv" style="display: none;">
-          </div>
-        </div>
-      </div>
+      <!-- Hidden inputs to maintain compatibility -->
+      <input type="hidden" id="targetAccountInput" value="">
+      <input type="hidden" id="syncPinInput" value="JN-8899">
     </div>
   </div>
 
   <!-- Scripts -->
-  <script src="/static/js/app.js?v=3"></script>
-  <script src="/static/js/mt5.js?v=3"></script>
+  <script src="/static/js/app.js?v=4"></script>
+  <script src="/static/js/mt5.js?v=4"></script>
   <script>
     // Register PWA service worker
     if ('serviceWorker' in navigator) {
