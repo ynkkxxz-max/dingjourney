@@ -137,10 +137,20 @@ function setupEventListeners() {
     closeModal('addTradeModal');
   });
 
-  // Refresh Button
+  // Refresh Button (Syncs active MT5 deals & refreshes calendar)
   addListener('btnRefresh', 'click', async () => {
-    showToast('Refreshing data...', 'info');
+    showToast('Syncing with MT5 & refreshing...', 'info');
+    try {
+      await fetch('/api/mt5/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days_back: 7 })
+      });
+    } catch (e) {
+      // Offline / passive
+    }
     await refreshDashboard();
+    checkMT5LiveStatus();
     showToast('Dashboard up to date!', 'success');
   });
 
