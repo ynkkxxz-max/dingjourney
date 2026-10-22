@@ -181,21 +181,26 @@ def connect_and_login_mt5(login: Optional[int] = None, password: Optional[str] =
     }
 
 
-def sync_active_terminal(days_back: int = 180) -> Dict[str, Any]:
+def sync_active_terminal(days_back: int = 180, target_account: Optional[str] = None, sync_pin: Optional[str] = None) -> Dict[str, Any]:
     """
     Sync trades directly from the currently active/running MT5 terminal.
+    Verifies Sync PIN and Target Account to prevent collisions across multiple MT5 instances.
     """
     if not MT5_AVAILABLE:
         return {"success": False, "error": "MetaTrader5 module is not installed."}
 
-    # Connect to active terminal
-    init_kwargs = {}
-    if os.path.exists(DEFAULT_MT5_PATH):
-        init_kwargs["path"] = DEFAULT_MT5_PATH
+    # 1. Verify Sync PIN if provided
+    saved_pin = get_config().get("sync_pin", "JN-8899").strip()
+    if sync_pin and sync_pin.strip() != saved_pin:
+        return {
+            "success": False,
+            "error": "❌ លេខកូដសម្ងាត់ Sync PIN មិនត្រឹមត្រូវឡើយ! (Invalid Sync PIN)"
+        }
 
-    initialized = mt5.initialize(**init_kwargs)
-    if not initialized:
-        initialized = mt5.initialize()
+    # 2. Connect to active terminal (Try without path first to attach to active terminal)
+    initialized = mt5.initialize()
+    if not initialized and os.path.exists(DEFAULT_MT5_PATH):
+        initialized = mt5.initialize(path=DEFAULT_MT5_PATH)
 
     if not initialized:
         err = mt5.last_error()
@@ -217,6 +222,22 @@ def sync_active_terminal(days_back: int = 180) -> Dict[str, Any]:
             "success": False,
             "error": "កម្មវិធី MT5 កំពុងបើកពិតមែន តែមិនទាន់មានគណនី Login ឡើយ។ សូម Login ចូលគណនីរបស់អ្នកក្នុង MT5 ជាមុនសិន។"
         }
+
+    # 3. Target Account Collision Check
+    current_login = str(account.login).strip()
+    expected_target = (target_account or get_config().get("target_account", "")).strip()
+    if expected_target and current_login != expected_target:
+        mt5.shutdown()
+        return {
+            "success": False,
+            "error": f"⚠️ MT5 កំពុងដំណើរការគណនី [{current_login}] ({account.company}) ដែលខុសពីលេខសម្គាល់គណនីគោលដៅ [{expected_target}] របស់អ្នក! សូមប្តូរចូលគណនីឱ្យបានត្រឹមត្រូវសិន ដើម្បីការពារកុំឱ្យជាន់ទិន្នន័យគ្នា។",
+            "detected_account": current_login,
+            "target_account": expected_target
+        }
+
+    # Auto-bind target account if not set yet
+    if not expected_target:
+        set_config("target_account", current_login)
 
     # Detect whether account is REAL or DEMO
     trade_mode = getattr(account, "trade_mode", 2)
