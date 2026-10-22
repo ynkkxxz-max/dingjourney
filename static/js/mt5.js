@@ -107,7 +107,7 @@ function setupMT5Handlers() {
       const sync_pin = syncPinInput ? syncPinInput.value.trim() : 'JN-8899';
 
       if (!sync_pin) {
-        showToast('សូមបញ្ចូលលេខកូដសម្ងាត់ Sync PIN!', 'error');
+        showToast('Please enter a valid Sync PIN!', 'error');
         return;
       }
 
@@ -122,7 +122,7 @@ function setupMT5Handlers() {
         const result = await res.json();
         if (result.success) {
           if (eaSyncPinDisplay) eaSyncPinDisplay.value = sync_pin;
-          showToast('បានរក្សាទុកលេខសម្គាល់ & PIN ជោគជ័យ!', 'success');
+          showToast('MT5 Account ID & Sync PIN saved successfully!', 'success');
         } else {
           showToast('Failed to save security settings.', 'error');
         }
@@ -131,7 +131,7 @@ function setupMT5Handlers() {
         showToast('Error saving security settings.', 'error');
       } finally {
         btnSaveSecurity.disabled = false;
-        btnSaveSecurity.textContent = 'រក្សាទុក';
+        btnSaveSecurity.textContent = 'Save';
       }
     });
   }
