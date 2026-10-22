@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Journa NextGen - Trading Calendar Dashboard</title>
+  
+  <!-- iOS PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Journa NextGen">
+  <meta name="theme-color" content="#0a0d14">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="/static/icons/icon-192.png">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css?v=2">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- TOP NAVIGATION & CONTROLS -->
+    <header class="top-navbar">
+      <div class="brand-section">
+        <div class="brand-icon" style="padding: 0; overflow: hidden; border: none; background: transparent;">
+          <img src="/static/icons/icon-192.png" alt="Journa NextGen Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px; box-shadow: 0 0 15px rgba(0, 229, 153, 0.4);">
+        </div>
+        <h1 class="brand-title">Journa NextGen</h1>
+        <span class="brand-badge" id="brandBadgeYear">2026</span>
+      </div>
+
+      <div class="header-controls">
+        <!-- Month Selector -->
+        <select class="select-control" id="monthSelect">
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10" selected>October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+
+        <!-- Year Selector -->
+        <select class="select-control" id="yearSelect">
+          <!-- Populated by JS -->
+        </select>
+
+        <!-- Account Filter Tabs (All / Real / Demo) -->
+        <div class="account-filter-tabs" id="accountFilterTabs" title="Filter trades by Account Type">
+          <button class="account-tab active" data-type="ALL">All</button>
+          <button class="account-tab real" data-type="REAL">🟢 Real</button>
+          <button class="account-tab demo" data-type="DEMO">🟡 Demo</button>
+        </div>
+
+        <!-- MT5 Connect & Sync -->
+        <button class="btn-mt5" id="btnMt5Modal" title="MetaTrader 5 Sync">
+          <span class="pulse-dot" id="mt5PulseDot"></span>
+          <span id="mt5StatusText">MT5 Connect</span>
+        </button>
+
+        <!-- + Add Trade Button -->
+        <button class="btn-primary" id="btnAddTrade">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Trade
+        </button>
+
+        <!-- Refresh Button -->
+        <button class="btn-icon" id="btnRefresh" title="Refresh Data">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- KPI STATS CARDS -->
+    <section class="kpi-grid">
+      <!-- 1. Starting Capital -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Starting Capital</span>
+          <button class="kpi-icon-btn" id="btnEditCapital" title="Edit Capital">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          </button>
+        </div>
+        <div class="kpi-value" id="kpiStartingCapital">$10,000.00</div>
+        <div class="kpi-footer">
+          <span class="account-badge real" id="kpiAccountTypeBadge" title="Account Type">REAL</span>
+          <span id="kpiAccountName">Base Account</span>
+        </div>
+      </div>
+
+      <!-- 2. Monthly Net P&L -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Monthly Net P&L</span>
+          <span class="kpi-badge-pct" id="kpiPnlPct">+23.25%</span>
+        </div>
+        <div class="kpi-value" id="kpiMonthlyNetPnl">+$2,325.00</div>
+        <div class="kpi-footer" id="kpiCurrentBalance">Balance: $12,325.00</div>
+      </div>
+
+      <!-- 3. Total Trades -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Total Trades</span>
+        </div>
+        <div class="kpi-value" id="kpiTotalTrades">8</div>
+        <div class="kpi-footer">
+          <div class="trades-breakdown" id="kpiTradesBreakdown">
+            <span class="green-txt">5W</span> • <span class="red-txt">3L</span> • <span class="gray-txt">0BE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Win Rate -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Win Rate</span>
+        </div>
+        <div class="kpi-value" style="color: var(--color-gold);" id="kpiWinRate">62.5%</div>
+        <div class="winrate-bar-track">
+          <div class="winrate-bar-fill" id="kpiWinRateBar" style="width: 62.5%;"></div>
+        </div>
+      </div>
+
+      <!-- 5. Profit Factor -->
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span class="kpi-title">Profit Factor</span>
+        </div>
+        <div class="kpi-value" id="kpiProfitFactor">4.42</div>
+        <div class="kpi-footer">
+          <span id="kpiGrossWin" style="color: var(--color-profit); font-weight: 600;">Gross Win: $3,085</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CALENDAR DASHBOARD CARD -->
+    <main class="calendar-card">
+      <div class="calendar-topbar">
+        <div class="calendar-date-indicator">
+          <span class="dot"></span>
+          <span id="calendarMonthTitle">October 2026</span>
+        </div>
+        
+        <div class="calendar-legend">
+          <div class="legend-item">
+            <span class="legend-sq profit"></span>
+            <span>Profit</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-sq loss"></span>
+            <span>Loss</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Days of week -->
+      <div class="days-header">
+        <div class="day-header-cell">MON</div>
+        <div class="day-header-cell">TUE</div>
+        <div class="day-header-cell">WED</div>
+        <div class="day-header-cell">THU</div>
+        <div class="day-header-cell">FRI</div>
+        <div class="day-header-cell">SAT</div>
+        <div class="day-header-cell">SUN</div>
+      </div>
+
+      <!-- Calendar day cards grid (dynamically populated) -->
+      <div class="calendar-grid" id="calendarGrid">
+        <!-- Rendered by JS -->
+      </div>
+    </main>
+
+  </div>
+
+  <!-- MODAL: ADD TRADE -->
+  <div class="modal-overlay" id="addTradeModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <svg width="20" height="20" fill="none" stroke="var(--color-profit)" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          Record New Trade
+        </h2>
+        <button class="modal-close-btn" id="closeAddTradeModal">&times;</button>
+      </div>
+
+      <form id="addTradeForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Trade Direction</label>
+            <div class="radio-group">
+              <div class="radio-btn buy-active" id="btnTypeBuy" style="flex: 1; text-align: center;">BUY</div>
+              <div class="radio-btn" id="btnTypeSell" style="flex: 1; text-align: center;">SELL</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Account Type</label>
+            <div class="radio-group">
+              <div class="radio-btn real-active" id="btnAccReal" style="flex: 1; text-align: center;">🟢 REAL</div>
+              <div class="radio-btn" id="btnAccDemo" style="flex: 1; text-align: center;">🟡 DEMO</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Symbol</label>
+            <input type="text" class="form-input" id="tradeSymbolInput" value="XAUUSD" placeholder="e.g. XAUUSD, EURUSD, BTC" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Lots / Volume</label>
+            <input type="number" step="0.01" class="form-input" id="tradeLotsInput" value="1.0" required>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Close Date</label>
+            <input type="date" class="form-input" id="tradeDateInput" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Net Profit / Loss ($)</label>
+            <input type="number" step="0.01" class="form-input" id="tradeProfitInput" placeholder="e.g. 815.00 or -250.00" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes / Strategy</label>
+          <input type="text" class="form-input" id="tradeNotesInput" placeholder="e.g. London breakout TP hit, Trend retest">
+        </div>
+
+        <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">
+            Save Trade to Journal
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: DAY DETAIL -->
+  <div class="modal-overlay" id="dayDetailModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 class="modal-title" id="dayDetailDateTitle">Trades</h2>
+        <button class="modal-close-btn" id="closeDayDetailModal">&times;</button>
+      </div>
+
+      <div id="dayTradesList">
+        <!-- Rendered by JS -->
+      </div>
+
+      <div style="margin-top: 20px; display: flex; gap: 10px;">
+        <button class="btn-primary" id="btnAddTradeFromDay" style="flex: 1; justify-content: center;">
+          + Add Trade on This Day
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT CAPITAL -->
+  <div class="modal-overlay" id="capitalModal">
+    <div class="modal-box" style="max-width: 420px;">
+      <div class="modal-header">
+        <h2 class="modal-title">Starting Capital</h2>
+        <button class="modal-close-btn" id="closeCapitalModal">&times;</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Initial Account Balance ($)</label>
+        <input type="number" step="100" class="form-input" id="capitalInput" value="10000.00">
+      </div>
+      <button class="btn-primary" id="btnSaveCapital" style="width: 100%; justify-content: center; margin-top: 16px;">
+        Update Capital
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: MT5 SYNC & INTEGRATION -->
+  <div class="modal-overlay" id="mt5Modal">
+    <div class="modal-box" style="max-width: 650px;">
+      <div class="modal-header">
+        <h2 class="modal-title">
+          <span style="color: #38bdf8;">⚡</span>
+          MetaTrader 5 Integration
+        </h2>
+        <button class="modal-close-btn" id="closeMt5Modal">&times;</button>
+      </div>
+
+      <div class="modal-tabs">
+        <button class="tab-btn active" id="tabMt5Direct">⚡ 1-Click Connect (PC)</button>
+        <button class="tab-btn" id="tabMt5Import">📂 Import Report (Mobile)</button>
+        <button class="tab-btn" id="tabMt5Ios">📱 iOS Setup</button>
+      </div>
+
+      <!-- Tab 1: 1-Click MT5 Connect (PRIMARY & 100% PASSWORD-FREE) -->
+      <div id="mt5ContentDirect">
+        <!-- Connected Account Card -->
+        <div id="mt5AccountConnectedCard" style="display: none; background: rgba(0, 229, 153, 0.1); border: 1.5px solid var(--color-profit); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="color: var(--color-profit); font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 8px;">
+              <span class="pulse-dot"></span>
+              MT5 Connected: <span id="mt5CardTypeBadge" class="account-badge real">REAL</span>
+            </div>
+            <span style="font-size: 12px; color: var(--text-secondary);" id="mt5LastSyncTime"></span>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: #e2e8f0;">
+            <div>Account: <b id="mt5CardAccount">-</b></div>
+            <div>Broker: <b id="mt5CardBroker">-</b></div>
+            <div>Balance: <b style="color: var(--color-profit);" id="mt5CardBalance">$0.00</b></div>
+            <div>Equity: <b style="color: #38bdf8;" id="mt5CardEquity">$0.00</b></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Account Type</label>
+          <div class="radio-group">
+            <div class="radio-btn buy-active" id="btnModeReal" style="cursor: pointer;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-profit); display: inline-block; margin-right: 6px;"></span>
+              REAL Account
+            </div>
+            <div class="radio-btn" id="btnModeDemo" style="cursor: pointer;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-gold); display: inline-block; margin-right: 6px;"></span>
+              DEMO Account
+            </div>
+          </div>
+        </div>
+
+        <div style="background: rgba(0, 229, 153, 0.05); border: 1px solid rgba(0, 229, 153, 0.2); border-radius: 8px; padding: 12px; margin-top: 10px; margin-bottom: 14px; font-size: 12px; color: #94a3b8; line-height: 1.6;">
+          🔒 <b>100% Private & Password-Free:</b> មិនត្រូវការ Password អ្វីឡើយ! គ្រាន់តែបើក MT5 លើកុំព្យូទ័ររបស់អ្នក រួចចុចប៊ូតុងខាងក្រោម៖
+        </div>
+
+        <button class="btn-primary" id="btnTriggerMt5Sync" style="width: 100%; justify-content: center; padding: 14px; font-size: 15px; margin-bottom: 12px;">
+          Connect Active MT5 Terminal
+        </button>
+      </div>
+
+      <!-- Tab 2: Import Statement (For Mobile users) -->
+      <div id="mt5ContentImport" style="display: none;">
+        <div style="background: rgba(0, 229, 153, 0.08); border: 1px solid rgba(0, 229, 153, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: #e2e8f0; line-height: 1.6;">
+          🛡️ <b>របៀប Upload របាយការណ៍ (សម្រាប់អ្នក Trade លើទូរស័ព្ទ)៖</b><br>
+          Export របាយការណ៍ Trade History ពី MT5 លើទូរស័ព្ទ រួចយកមកទម្លាក់ទីនេះ៖
+        </div>
+
+        <div class="dropzone" id="reportDropzone">
+          <svg class="dropzone-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">ចុចទីនេះ ឬ អូសទម្លាក់ File របាយការណ៍ MT5</div>
+          <div style="font-size: 12px; color: var(--text-muted);">គាំទ្រ File: .html, .htm, និង .csv (របាយការណ៍ជួញដូរ)</div>
+          <input type="file" id="reportFileInput" accept=".html,.htm,.csv" style="display: none;">
+        </div>
+
+        <div style="background: #0d121c; border: 1px solid #1c2638; border-radius: 8px; padding: 12px; margin-top: 16px; font-size: 12px; color: #94a3b8; line-height: 1.6;">
+          <b style="color: #38bdf8;">📱 របៀបទាញយក Report ពី MT5 លើទូរស័ព្ទ៖</b><br>
+          1. ចូលក្នុងកម្មវិធី MT5 លើទូរស័ព្ទ ➔ ចុចផ្ទាំង <b>History</b><br>
+          2. ចុច icon ប្រតិទិន ➔ ជ្រើសរើសរយៈពេល (Last 3 Months ឬ All History)<br>
+          3. ចុចប៊ូតុង <b>Share</b> ➔ រើស <b>Save to Files</b> (ជា HTML ឬ CSV)<br>
+          4. យក File នោះមកចុច Upload ចូលប្រអប់ខាងលើ ជាការស្រេច!
+        </div>
+      </div>
+
+
+
+
+
+      <!-- Tab 4: iOS Setup Guide -->
+      <div id="mt5ContentIos" style="display: none;">
+        <div style="background: #0d121c; border: 1px solid #1c2638; border-radius: 8px; padding: 16px; font-size: 13px; color: #cbd5e1; line-height: 1.7;">
+          <h4 style="color: #38bdf8; margin-bottom: 10px; font-size: 15px;">📱 How to use Journa NextGen on iPhone / iOS</h4>
+          <ol style="margin-left: 20px; display: flex; flex-direction: column; gap: 8px;">
+            <li>Make sure your iPhone and Windows PC are on the same Wi-Fi network.</li>
+            <li>Find your PC's IP address (e.g. <code>192.168.1.XX</code>).</li>
+            <li>Open Safari on iPhone and navigate to: <code style="color: var(--color-profit);">http://&lt;PC-IP&gt;:8000</code></li>
+            <li>Tap the <b>Share</b> button (<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>) at the bottom of Safari.</li>
+            <li>Select <b>"Add to Home Screen"</b>.</li>
+            <li>Now Journa NextGen opens as a native app on your iPhone! All trades synced from MT5 on PC are visible on your iPhone in real-time.</li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/app.js?v=2"></script>
+  <script src="/static/js/mt5.js?v=2"></script>
+  <script>
+    // Register PWA service worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.log('SW registration error:', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
