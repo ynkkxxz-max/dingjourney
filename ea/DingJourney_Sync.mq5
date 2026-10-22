@@ -8,9 +8,10 @@
 #property version   "1.00"
 #property description "Auto-syncs closed trades and balance from MetaTrader 5 to DingJourney Dashboard"
 
-input string   InpServerUrl = "http://localhost:8000/api/mt5/webhook"; // DingJourney Webhook URL
-input int      InpSyncIntervalSeconds = 60;                          // Sync Interval (Seconds)
-input bool     InpSyncOnTradeClose = true;                           // Sync immediately on trade close
+input string   InpSyncPin             = "JN-8899";                                // Secret Sync PIN (Match your Dashboard PIN)
+input string   InpServerUrl           = "http://localhost:8000/api/mt5/webhook"; // DingJourney Webhook URL
+input int      InpSyncIntervalSeconds = 60;                                       // Sync Interval (Seconds)
+input bool     InpSyncOnTradeClose    = true;                                     // Sync immediately on trade close
 
 datetime g_lastSyncTime = 0;
 ulong    g_lastDealTicket = 0;
@@ -21,6 +22,7 @@ ulong    g_lastDealTicket = 0;
 int OnInit()
 {
    Print("DingJourney Auto-Sync EA Started.");
+   Print("Sync PIN: ", InpSyncPin);
    Print("Syncing to: ", InpServerUrl);
    EventSetTimer(InpSyncIntervalSeconds);
    SyncHistoryTrades();
@@ -118,7 +120,18 @@ void SyncHistoryTrades()
 
    if(addedCount > 0)
    {
-      string payload = "{\"trades\":" + jsonArray + "}";
+      long accLogin = AccountInfoInteger(ACCOUNT_LOGIN);
+      string accBroker = AccountInfoString(ACCOUNT_COMPANY);
+      string accCurrency = AccountInfoString(ACCOUNT_CURRENCY);
+      double accBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+      double accEquity = AccountInfoDouble(ACCOUNT_EQUITY);
+      long accMode = AccountInfoInteger(ACCOUNT_TRADE_MODE);
+      string accType = (accMode == ACCOUNT_TRADE_MODE_REAL) ? "REAL" : "DEMO";
+
+      string payload = StringFormat(
+         "{\"sync_pin\":\"%s\",\"account_number\":\"%I64d\",\"broker\":\"%s\",\"currency\":\"%s\",\"balance\":%.2f,\"equity\":%.2f\",\"account_type\":\"%s\",\"trades\":%s}",
+         InpSyncPin, accLogin, accBroker, accCurrency, accBalance, accEquity, accType, jsonArray
+      );
       SendHttpPost(payload);
    }
 }
