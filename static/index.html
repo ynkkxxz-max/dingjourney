@@ -352,6 +352,42 @@
         </div>
       </div>
 
+      <!-- Security & MT5 Account Identifier -->
+      <div style="background: rgba(17, 23, 36, 0.7); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <span style="font-size: 13px; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px;">
+            <svg width="15" height="15" fill="none" stroke="var(--color-gold)" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            MT5 Identifier & Sync PIN
+          </span>
+          <button type="button" id="btnSaveSecurity" style="background: rgba(0, 229, 153, 0.15); color: var(--color-profit); border: 1px solid rgba(0, 229, 153, 0.3); border-radius: 6px; padding: 4px 12px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s;" title="Save Account ID and PIN">
+            Save
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">MT5 Account ID</label>
+            <input type="text" class="form-input" id="targetAccountInput" placeholder="e.g. 10013164375" style="padding: 10px 12px; font-size: 13px; font-family: var(--font-mono); width: 100%;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; color: var(--text-secondary); margin-bottom: 6px;">Secret Sync PIN</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="text" class="form-input" id="syncPinInput" value="JN-8899" placeholder="e.g. JN-8899" style="padding: 10px 12px; font-size: 13px; font-family: var(--font-mono); width: 100%;">
+              <button type="button" id="btnCopyPin" style="position: absolute; right: 8px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 4px;" title="Copy PIN">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; line-height: 1.4;">
+          Prevents collisions between accounts and secures MT5 auto-synchronization.
+        </div>
+      </div>
+
       <!-- Security Notice -->
       <div style="background: rgba(0, 229, 153, 0.05); border: 1px solid rgba(0, 229, 153, 0.2); border-radius: 8px; padding: 12px 14px; margin-bottom: 18px; font-size: 12px; color: #94a3b8; line-height: 1.6;">
         🔒 <b>100% Private & Safe:</b> Connects directly to your active Windows MetaTrader 5 terminal without requiring passwords.
@@ -361,10 +397,6 @@
       <button class="btn-primary" id="btnTriggerMt5Sync" style="width: 100%; justify-content: center; padding: 14px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 18px rgba(0, 229, 153, 0.25);">
         Connect Active MT5 Terminal
       </button>
-
-      <!-- Hidden inputs to maintain compatibility -->
-      <input type="hidden" id="targetAccountInput" value="">
-      <input type="hidden" id="syncPinInput" value="JN-8899">
     </div>
   </div>
 
