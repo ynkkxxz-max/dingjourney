@@ -292,176 +292,112 @@
   </div>
 
   <!-- MODAL: MT5 SYNC & INTEGRATION -->
+  <!-- MODAL: MT5 INTEGRATION (CLEAN & MINIMALIST) -->
   <div class="modal-overlay" id="mt5Modal">
-    <div class="modal-box" style="max-width: 650px;">
-      <div class="modal-header">
-        <h2 class="modal-title">
-          <span style="color: #38bdf8;">⚡</span>
-          MetaTrader 5 Integration
+    <div class="modal-box" style="max-width: 480px; padding: 26px;">
+      <div class="modal-header" style="margin-bottom: 20px; padding-bottom: 14px;">
+        <h2 class="modal-title" style="font-size: 18px; display: flex; align-items: center; gap: 8px;">
+          <span style="color: var(--color-profit); font-size: 20px;">⚡</span>
+          MetaTrader 5 Sync
         </h2>
         <button class="modal-close-btn" id="closeMt5Modal">&times;</button>
       </div>
 
-      <div class="modal-tabs">
-        <button class="tab-btn active" id="tabMt5Direct">⚡ 1-Click Connect (PC)</button>
-        <button class="tab-btn" id="tabMt5Ea">🤖 Auto-Sync EA</button>
-        <button class="tab-btn" id="tabMt5Import">📂 Import Report</button>
-        <button class="tab-btn" id="tabMt5Ios">📱 iOS Setup</button>
-      </div>
-
-      <!-- Security / Account Binding Card -->
-      <div style="background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 10px; padding: 14px; margin-bottom: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-          <div style="color: #38bdf8; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px;">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            🔒 លេខសម្គាល់ & សុវត្ថិភាព Sync (ការពារការជាន់ទិន្នន័យ)
+      <!-- Connected Account Status Card (Automatically shows when connected) -->
+      <div id="mt5AccountConnectedCard" style="display: none; background: rgba(0, 229, 153, 0.08); border: 1.5px solid rgba(0, 229, 153, 0.35); border-radius: 12px; padding: 14px 16px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <div style="color: var(--color-profit); font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+            <span class="pulse-dot"></span>
+            MT5 Connected: <span id="mt5CardTypeBadge" class="account-badge real">REAL</span>
           </div>
-          <span style="font-size: 11px; color: var(--text-secondary);">ការពារជាន់គ្នាពេលបើក MT5 ច្រើន</span>
+          <span style="font-size: 11px; color: var(--text-muted);" id="mt5LastSyncTime"></span>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
           <div>
-            <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 4px;">លេខសម្គាល់គណនី MT5 (Target Account #)</label>
-            <input type="text" class="form-input" id="targetAccountInput" placeholder="ឧ. 210984562 (ទុកទទេ = ស្វ័យប្រវត្តិ)" style="padding: 7px 10px; font-size: 13px; font-family: var(--font-mono);">
+            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Account ID</span>
+            <b id="mt5CardAccount" style="font-family: var(--font-mono); color: #f8fafc; font-size: 14px;">-</b>
           </div>
           <div>
-            <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 4px;">លេខកូដសម្ងាត់ Sync (Secret PIN)</label>
-            <div style="display: flex; gap: 6px;">
-              <input type="text" class="form-input" id="syncPinInput" value="JN-8899" style="padding: 7px 10px; font-size: 13px; font-family: var(--font-mono); font-weight: bold; color: var(--color-profit);">
-              <button type="button" id="btnSaveSecurity" class="btn-secondary" style="padding: 6px 10px; font-size: 12px; white-space: nowrap;">រក្សាទុក</button>
-            </div>
+            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Broker</span>
+            <b id="mt5CardBroker" style="color: #cbd5e1;">-</b>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Balance</span>
+            <b style="color: var(--color-profit); font-family: var(--font-mono); font-size: 15px;" id="mt5CardBalance">$0.00</b>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); font-size: 11px; display: block; margin-bottom: 2px;">Equity</span>
+            <b style="color: #38bdf8; font-family: var(--font-mono); font-size: 15px;" id="mt5CardEquity">$0.00</b>
           </div>
         </div>
       </div>
 
-      <!-- Tab 1: 1-Click MT5 Connect (PRIMARY & 100% PASSWORD-FREE) -->
-      <div id="mt5ContentDirect">
-        <!-- Connected Account Card -->
-        <div id="mt5AccountConnectedCard" style="display: none; background: rgba(0, 229, 153, 0.1); border: 1.5px solid var(--color-profit); border-radius: 12px; padding: 16px; margin-bottom: 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div style="color: var(--color-profit); font-weight: 800; font-size: 15px; display: flex; align-items: center; gap: 8px;">
-              <span class="pulse-dot"></span>
-              MT5 Connected: <span id="mt5CardTypeBadge" class="account-badge real">REAL</span>
-            </div>
-            <span style="font-size: 12px; color: var(--text-secondary);" id="mt5LastSyncTime"></span>
+      <!-- Single Clean Account ID Input -->
+      <div class="form-group" style="margin-bottom: 18px;">
+        <label class="form-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span>លេខសម្គាល់គណនី MT5 (Account ID)</span>
+          <span style="font-size: 11px; color: var(--color-profit); text-transform: none; font-weight: 500;">✓ ការពារកុំឱ្យជាន់គ្នា</span>
+        </label>
+        <div style="position: relative; display: flex; align-items: center;">
+          <span style="position: absolute; left: 14px; color: var(--text-muted); font-family: var(--font-mono); font-weight: 700; font-size: 15px;">#</span>
+          <input type="text" class="form-input" id="targetAccountInput" placeholder="បញ្ចូលលេខ Account MT5 របស់អ្នក (ឧ. 10013164375)" style="padding-left: 34px; font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.5px;">
+        </div>
+        <span style="font-size: 11px; color: var(--text-muted); margin-top: 5px; display: block; line-height: 1.4;">
+          Journa NextGen នឹង Sync តែគណនីលេខនេះប៉ុណ្ណោះ ទោះបីបើក MT5 ច្រើនក៏មិនជាន់គ្នាឡើយ។
+        </span>
+      </div>
+
+      <!-- Hidden Sync PIN for background API safety -->
+      <input type="hidden" id="syncPinInput" value="JN-8899">
+
+      <!-- REAL vs DEMO Account Type Toggle -->
+      <div class="form-group" style="margin-bottom: 22px;">
+        <label class="form-label" style="margin-bottom: 6px;">ប្រភេទគណនី (Account Type)</label>
+        <div class="radio-group">
+          <div class="radio-btn buy-active" id="btnModeReal" style="cursor: pointer; padding: 11px; font-size: 13px;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-profit); display: inline-block; margin-right: 6px;"></span>
+            REAL Account
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: #e2e8f0;">
-            <div>Account: <b id="mt5CardAccount">-</b></div>
-            <div>Broker: <b id="mt5CardBroker">-</b></div>
-            <div>Balance: <b style="color: var(--color-profit);" id="mt5CardBalance">$0.00</b></div>
-            <div>Equity: <b style="color: #38bdf8;" id="mt5CardEquity">$0.00</b></div>
+          <div class="radio-btn" id="btnModeDemo" style="cursor: pointer; padding: 11px; font-size: 13px;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-gold); display: inline-block; margin-right: 6px;"></span>
+            DEMO Account
           </div>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label class="form-label">Account Type</label>
-          <div class="radio-group">
-            <div class="radio-btn buy-active" id="btnModeReal" style="cursor: pointer;">
-              <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-profit); display: inline-block; margin-right: 6px;"></span>
-              REAL Account
-            </div>
-            <div class="radio-btn" id="btnModeDemo" style="cursor: pointer;">
-              <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--color-gold); display: inline-block; margin-right: 6px;"></span>
-              DEMO Account
-            </div>
-          </div>
-        </div>
+      <!-- Big Primary Action Button -->
+      <button class="btn-primary" id="btnTriggerMt5Sync" style="width: 100%; justify-content: center; padding: 14px; font-size: 15px; font-weight: 700; margin-bottom: 14px; box-shadow: 0 4px 18px rgba(0, 229, 153, 0.25);">
+        ⚡ Connect & Sync MT5 Now
+      </button>
 
-        <div style="background: rgba(0, 229, 153, 0.05); border: 1px solid rgba(0, 229, 153, 0.2); border-radius: 8px; padding: 12px; margin-top: 10px; margin-bottom: 14px; font-size: 12px; color: #94a3b8; line-height: 1.6;">
-          🔒 <b>100% Private & Safe:</b> កម្មវិធីនឹងផ្ទៀងផ្ទាត់លេខសម្គាល់គណនី (Target Account) និងលេខកូដសម្ងាត់ (Sync PIN) ជាមុនសិន។ បើបើក MT5 ច្រើន វានឹងភ្ជាប់តែទៅកាន់ Account ដែលត្រូវគ្នាប៉ុណ្ណោះ!
-        </div>
+      <!-- Minimal Bottom Security Note -->
+      <div style="text-align: center; font-size: 11px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        <span>សុវត្ថិភាពខ្ពស់ 100% — មិនត្រូវការ Password ឡើយ</span>
+      </div>
 
-        <button class="btn-primary" id="btnTriggerMt5Sync" style="width: 100%; justify-content: center; padding: 14px; font-size: 15px; margin-bottom: 12px;">
-          Connect Active MT5 Terminal
+      <!-- Optional Collapsible for Advanced / File Import (Subtle and Clean) -->
+      <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
+        <button type="button" id="toggleImportSectionBtn" style="background: transparent; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-decoration: underline;">
+          📂 ចង់ Import File Report (HTML/CSV)? ចុចទីនេះ
         </button>
-      </div>
 
-      <!-- Tab 2: Auto-Sync EA (Real-Time Background Sync) -->
-      <div id="mt5ContentEa" style="display: none;">
-        <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: #e2e8f0; line-height: 1.6;">
-          🤖 <b>Auto-Sync EA (សម្រាប់ដំណើរការស្វ័យប្រវត្តិលើ MT5)៖</b><br>
-          ដាក់ File EA នេះចូលក្នុង MT5 ដើម្បីឱ្យវា Sync Trade មក Dashboard ភ្លាមៗរាល់ពេលបិទ Order (TP / SL)!
-        </div>
-
-        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-          <a href="/api/download/ea/JournaNextGen_Sync.mq5" download class="btn-primary" style="flex: 1; justify-content: center; text-decoration: none; padding: 10px;">
-            📥 Download JournaNextGen_Sync.mq5
-          </a>
-        </div>
-
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label class="form-label">1. Webhook Server URL</label>
-          <div style="display: flex; gap: 8px;">
-            <input type="text" class="form-input" id="webhookUrlInput" readonly style="font-family: var(--font-mono); font-size: 12px; color: #38bdf8;">
-            <button type="button" class="btn-secondary" id="btnCopyWebhook" style="white-space: nowrap;">Copy URL</button>
+        <div id="collapsibleImportArea" style="display: none; margin-top: 14px;">
+          <div class="dropzone" id="reportDropzone" style="padding: 18px 12px;">
+            <svg class="dropzone-icon" style="width: 28px; height: 28px;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <div style="font-weight: 700; font-size: 13px;">ចុចទីនេះ ឬទម្លាក់ File Report (.html / .csv)</div>
+            <input type="file" id="reportFileInput" accept=".html,.htm,.csv" style="display: none;">
           </div>
         </div>
-
-        <div class="form-group" style="margin-bottom: 16px;">
-          <label class="form-label">2. Secret Sync PIN (សម្រាប់ដាក់ក្នុង Input របស់ EA)</label>
-          <div style="display: flex; gap: 8px;">
-            <input type="text" class="form-input" id="eaSyncPinDisplay" readonly style="font-family: var(--font-mono); font-size: 13px; font-weight: bold; color: var(--color-profit);">
-            <button type="button" class="btn-secondary" id="btnCopyPin" style="white-space: nowrap;">Copy PIN</button>
-          </div>
-        </div>
-
-        <div style="background: #0d121c; border: 1px solid #1c2638; border-radius: 8px; padding: 12px; font-size: 12px; color: #94a3b8; line-height: 1.6;">
-          <b style="color: #38bdf8;">📌 របៀប Setup ក្នុង MT5 ឱ្យដំណើរការ៖</b><br>
-          1. ចម្លង File <code>JournaNextGen_Sync.mq5</code> ដាក់ចូល Folder <code>MQL5/Experts</code> ក្នុង MT5<br>
-          2. បើក MT5 ➔ Tools ➔ Options ➔ <b>Expert Advisors</b> ➔ ធីក <b>"Allow WebRequest for listed URL"</b> រួចចុច <b>Add URL</b> ដាក់ URL ខាងលើ<br>
-          3. អូស EA ដាក់លើ Chart ណាមួយ រួចផ្ទៀងផ្ទាត់ <b>InpSyncPin</b> ឱ្យដូចនឹង PIN របស់អ្នក ជាការស្រេច!
-        </div>
       </div>
-
-      <!-- Tab 2: Import Statement (For Mobile users) -->
-      <div id="mt5ContentImport" style="display: none;">
-        <div style="background: rgba(0, 229, 153, 0.08); border: 1px solid rgba(0, 229, 153, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 16px; font-size: 12px; color: #e2e8f0; line-height: 1.6;">
-          🛡️ <b>របៀប Upload របាយការណ៍ (សម្រាប់អ្នក Trade លើទូរស័ព្ទ)៖</b><br>
-          Export របាយការណ៍ Trade History ពី MT5 លើទូរស័ព្ទ រួចយកមកទម្លាក់ទីនេះ៖
-        </div>
-
-        <div class="dropzone" id="reportDropzone">
-          <svg class="dropzone-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-          </svg>
-          <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">ចុចទីនេះ ឬ អូសទម្លាក់ File របាយការណ៍ MT5</div>
-          <div style="font-size: 12px; color: var(--text-muted);">គាំទ្រ File: .html, .htm, និង .csv (របាយការណ៍ជួញដូរ)</div>
-          <input type="file" id="reportFileInput" accept=".html,.htm,.csv" style="display: none;">
-        </div>
-
-        <div style="background: #0d121c; border: 1px solid #1c2638; border-radius: 8px; padding: 12px; margin-top: 16px; font-size: 12px; color: #94a3b8; line-height: 1.6;">
-          <b style="color: #38bdf8;">📱 របៀបទាញយក Report ពី MT5 លើទូរស័ព្ទ៖</b><br>
-          1. ចូលក្នុងកម្មវិធី MT5 លើទូរស័ព្ទ ➔ ចុចផ្ទាំង <b>History</b><br>
-          2. ចុច icon ប្រតិទិន ➔ ជ្រើសរើសរយៈពេល (Last 3 Months ឬ All History)<br>
-          3. ចុចប៊ូតុង <b>Share</b> ➔ រើស <b>Save to Files</b> (ជា HTML ឬ CSV)<br>
-          4. យក File នោះមកចុច Upload ចូលប្រអប់ខាងលើ ជាការស្រេច!
-        </div>
-      </div>
-
-
-
-
-
-      <!-- Tab 4: iOS Setup Guide -->
-      <div id="mt5ContentIos" style="display: none;">
-        <div style="background: #0d121c; border: 1px solid #1c2638; border-radius: 8px; padding: 16px; font-size: 13px; color: #cbd5e1; line-height: 1.7;">
-          <h4 style="color: #38bdf8; margin-bottom: 10px; font-size: 15px;">📱 How to use Journa NextGen on iPhone / iOS</h4>
-          <ol style="margin-left: 20px; display: flex; flex-direction: column; gap: 8px;">
-            <li>Make sure your iPhone and Windows PC are on the same Wi-Fi network.</li>
-            <li>Find your PC's IP address (e.g. <code>192.168.1.XX</code>).</li>
-            <li>Open Safari on iPhone and navigate to: <code style="color: var(--color-profit);">http://&lt;PC-IP&gt;:8000</code></li>
-            <li>Tap the <b>Share</b> button (<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="vertical-align: middle;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>) at the bottom of Safari.</li>
-            <li>Select <b>"Add to Home Screen"</b>.</li>
-            <li>Now Journa NextGen opens as a native app on your iPhone! All trades synced from MT5 on PC are visible on your iPhone in real-time.</li>
-          </ol>
-        </div>
-      </div>
-
     </div>
   </div>
 
   <!-- Scripts -->
-  <script src="/static/js/app.js?v=2"></script>
-  <script src="/static/js/mt5.js?v=2"></script>
+  <script src="/static/js/app.js?v=3"></script>
+  <script src="/static/js/mt5.js?v=3"></script>
   <script>
     // Register PWA service worker
     if ('serviceWorker' in navigator) {
