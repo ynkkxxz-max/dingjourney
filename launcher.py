@@ -32,13 +32,13 @@ def main():
     print("=" * 65)
     print("\n[1/3] Starting FastAPI Server on http://localhost:8000...")
     
+    server_log_path = os.path.join(BASE_DIR, "server.log")
+    server_log = open(server_log_path, "w", encoding="utf-8")
     server_proc = subprocess.Popen(
         [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"],
-        stdout=subprocess.PIPE,
+        stdout=server_log,
         stderr=subprocess.STDOUT,
-        text=True,
-        encoding="utf-8",
-        errors="replace"
+        text=True
     )
     
     # Wait for server to respond
@@ -46,36 +46,36 @@ def main():
     print("[✓] Server started successfully.")
     
     tunnel_proc = None
+    tunnel_log = None
     live_url = "http://localhost:8000"
     
     if os.path.exists(BIN_CLOUDFLARED):
         print("\n[2/3] Connecting Cloudflare Secure Tunnel for iPhone/Remote...")
         try:
+            tunnel_log = open(LOG_FILE, "w", encoding="utf-8")
             tunnel_proc = subprocess.Popen(
                 [BIN_CLOUDFLARED, "tunnel", "--url", "http://127.0.0.1:8000"],
-                stdout=subprocess.PIPE,
+                stdout=tunnel_log,
                 stderr=subprocess.STDOUT,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                bufsize=1
+                text=True
             )
             
-            # Read first few lines to get the live trycloudflare URL
+            # Read tunnel.log for the live trycloudflare URL
             start_wait = time.time()
-            with open(LOG_FILE, "w", encoding="utf-8") as f_log:
-                while time.time() - start_wait < 15:
-                    line = tunnel_proc.stdout.readline()
-                    if not line:
-                        break
-                    f_log.write(line)
-                    f_log.flush()
-                    match = re.search(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com", line)
-                    if match:
-                        live_url = match.group(0)
-                        with open(URL_FILE, "w", encoding="utf-8") as uf:
-                            uf.write(live_url)
-                        break
+            while time.time() - start_wait < 15:
+                time.sleep(0.5)
+                if os.path.exists(LOG_FILE):
+                    try:
+                        with open(LOG_FILE, "r", encoding="utf-8", errors="ignore") as f:
+                            content = f.read()
+                            match = re.search(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com", content)
+                            if match:
+                                live_url = match.group(0)
+                                with open(URL_FILE, "w", encoding="utf-8") as uf:
+                                    uf.write(live_url)
+                                break
+                    except Exception:
+                        pass
         except Exception as e:
             print(f"[!] Tunnel startup notice: {e}")
     else:
@@ -83,16 +83,16 @@ def main():
 
     print("\n[3/3] Opening dashboard in browser...")
     try:
-        webbrowser.open("http://localhost:8000")
+        webbrowser.open("http://127.0.0.1:8000")
     except Exception:
         pass
 
     print("\n" + "=" * 65)
     print("  ✅ JOURNA NEXTGEN IS LIVE & READY!")
     print("=" * 65)
-    print(f"  💻 Local PC Link:       http://localhost:8000")
-    if live_url != "http://localhost:8000":
-        print(f"  📱 iPhone / Remote Link: {live_url}")
+    print(f"  💻 Local PC Link (Instant 3ms): http://127.0.0.1:8000")
+    if live_url != "http://localhost:8000" and live_url != "http://127.0.0.1:8000":
+        print(f"  📱 iPhone / Remote Link:        {live_url}")
         print("\n  👉 iPhone Tip: Open the link above in Safari and select")
         print("     'Add to Home Screen' to use it as a native iOS App!")
     print("=" * 65)
@@ -105,6 +105,13 @@ def main():
             tunnel_proc.terminate()
         if server_proc and server_proc.poll() is None:
             server_proc.terminate()
+        try:
+            if server_log:
+                server_log.close()
+            if tunnel_log:
+                tunnel_log.close()
+        except Exception:
+            pass
         sys.exit(0)
 
     signal.signal(signal.SIGINT, cleanup)
