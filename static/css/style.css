@@ -550,6 +550,21 @@ body {
   transform: translateY(-2px);
 }
 
+.day-cell.today-cell {
+  border: 1.5px solid #38bdf8 !important;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+}
+
+.day-cell.today-cell .today-indicator-tag {
+  font-size: 9px;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
 .day-cell.inactive-month {
   opacity: 0.25;
   background: #090c13;
