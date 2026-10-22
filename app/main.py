@@ -84,6 +84,11 @@ class MT5SyncModel(BaseModel):
     sync_pin: Optional[str] = None
 
 
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "app": "Journa NextGen", "timestamp": str(os.getenv("RENDER_GIT_COMMIT", "live"))}
+
+
 @app.get("/api/status")
 def api_status():
     return {
