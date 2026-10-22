@@ -431,8 +431,10 @@ async function refreshMT5ModalStatus() {
   }
 }
 
-// Automatic Real-Time MT5 Background Poller
+// Automatic Real-Time MT5 Background Poller (every 2 seconds for instant SL/TP change)
 let autoSyncInterval = null;
+let lastKnownBalance = null;
+
 function startMT5AutoSync() {
   if (autoSyncInterval) return;
   autoSyncInterval = setInterval(async () => {
@@ -444,20 +446,28 @@ function startMT5AutoSync() {
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.success && data.synced_trades > 0) {
-          if (typeof refreshDashboard === 'function') {
-            await refreshDashboard();
+        if (data.success && data.account) {
+          const currentBal = Number(data.account.balance);
+          // If balance changed (e.g. SL or TP hit)
+          if (lastKnownBalance !== null && currentBal !== lastKnownBalance) {
+            const diff = currentBal - lastKnownBalance;
+            const diffStr = diff >= 0 ? `+$${diff.toFixed(2)}` : `-$${Math.abs(diff).toFixed(2)}`;
+            const noticeType = diff >= 0 ? 'TP Hit' : 'SL Hit';
+            if (typeof showToast === 'function') {
+              showToast(`⚡ ${noticeType} (${diffStr})! Calendar updated.`, diff >= 0 ? 'success' : 'error');
+            }
+            if (typeof refreshDashboard === 'function') {
+              await refreshDashboard();
+            }
+            if (typeof checkMT5LiveStatus === 'function') {
+              checkMT5LiveStatus();
+            }
           }
-          if (typeof checkMT5LiveStatus === 'function') {
-            checkMT5LiveStatus();
-          }
-          if (typeof showToast === 'function') {
-            showToast(`⚡ ${data.synced_trades} newly closed MT5 trade(s) recorded!`, 'success');
-          }
+          lastKnownBalance = currentBal;
         }
       }
     } catch (e) {
       // background polling - silent
     }
-  }, 7000); // Poll every 7 seconds for instant real-time recording
+  }, 2000); // Poll every 2 seconds for instant SL/TP updates!
 }
