@@ -55,6 +55,18 @@ function setupMT5Handlers() {
     }
   });
 
+  // Collapsible Import Section Toggle
+  const toggleImportBtn = document.getElementById('toggleImportSectionBtn');
+  const collapsibleImport = document.getElementById('collapsibleImportArea');
+  if (toggleImportBtn && collapsibleImport) {
+    toggleImportBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isHidden = collapsibleImport.style.display === 'none' || collapsibleImport.style.display === '';
+      collapsibleImport.style.display = isHidden ? 'block' : 'none';
+      toggleImportBtn.textContent = isHidden ? '▲ បិទផ្ទាំង Import Report' : '📂 ចង់ Import File Report (HTML/CSV)? ចុចទីនេះ';
+    });
+  }
+
   // Load and populate Security PIN & Target Account
   async function loadSecuritySettings() {
     try {
