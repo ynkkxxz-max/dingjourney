@@ -37,6 +37,7 @@ function setupMT5Handlers() {
 
   const tabs = [
     { btn: tabDirect, content: contentDirect },
+    { btn: tabEa, content: contentEa },
     { btn: tabImport, content: contentImport },
     { btn: tabIos, content: contentIos }
   ];
@@ -53,6 +54,86 @@ function setupMT5Handlers() {
       });
     }
   });
+
+  // Load and populate Security PIN & Target Account
+  async function loadSecuritySettings() {
+    try {
+      const res = await fetch('/api/config');
+      const cfg = await res.json();
+      const targetAccInput = document.getElementById('targetAccountInput');
+      const syncPinInput = document.getElementById('syncPinInput');
+      const eaSyncPinDisplay = document.getElementById('eaSyncPinDisplay');
+
+      if (targetAccInput && cfg.target_account !== undefined) {
+        targetAccInput.value = cfg.target_account;
+      }
+      if (syncPinInput && cfg.sync_pin) {
+        syncPinInput.value = cfg.sync_pin;
+      }
+      if (eaSyncPinDisplay && cfg.sync_pin) {
+        eaSyncPinDisplay.value = cfg.sync_pin;
+      }
+    } catch (e) {
+      console.error('Failed to load security settings:', e);
+    }
+  }
+  loadSecuritySettings();
+
+  // Save Security Settings Button
+  const btnSaveSecurity = document.getElementById('btnSaveSecurity');
+  if (btnSaveSecurity) {
+    btnSaveSecurity.addEventListener('click', async () => {
+      const targetAccInput = document.getElementById('targetAccountInput');
+      const syncPinInput = document.getElementById('syncPinInput');
+      const eaSyncPinDisplay = document.getElementById('eaSyncPinDisplay');
+
+      const target_account = targetAccInput ? targetAccInput.value.trim() : '';
+      const sync_pin = syncPinInput ? syncPinInput.value.trim() : 'JN-8899';
+
+      if (!sync_pin) {
+        showToast('សូមបញ្ចូលលេខកូដសម្ងាត់ Sync PIN!', 'error');
+        return;
+      }
+
+      try {
+        btnSaveSecurity.disabled = true;
+        btnSaveSecurity.textContent = '...';
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_account, sync_pin })
+        });
+        const result = await res.json();
+        if (result.success) {
+          if (eaSyncPinDisplay) eaSyncPinDisplay.value = sync_pin;
+          showToast('បានរក្សាទុកលេខសម្គាល់ & PIN ជោគជ័យ!', 'success');
+        } else {
+          showToast('Failed to save security settings.', 'error');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Error saving security settings.', 'error');
+      } finally {
+        btnSaveSecurity.disabled = false;
+        btnSaveSecurity.textContent = 'រក្សាទុក';
+      }
+    });
+  }
+
+  // Copy PIN Button
+  const btnCopyPin = document.getElementById('btnCopyPin');
+  if (btnCopyPin) {
+    btnCopyPin.addEventListener('click', () => {
+      const eaSyncPinDisplay = document.getElementById('eaSyncPinDisplay') || document.getElementById('syncPinInput');
+      if (eaSyncPinDisplay) {
+        navigator.clipboard.writeText(eaSyncPinDisplay.value).then(() => {
+          showToast('Sync PIN copied to clipboard!', 'success');
+        }).catch(() => {
+          showToast('PIN: ' + eaSyncPinDisplay.value, 'info');
+        });
+      }
+    });
+  }
 
   // Dynamic Webhook URL input & copy
   const webhookInput = document.getElementById('webhookUrlInput');
@@ -90,26 +171,35 @@ function setupMT5Handlers() {
     });
   }
 
-  // 1-Click MT5 Sync Button (NO PASSWORD REQUIRED)
+  // 1-Click MT5 Sync Button with PIN and Target Account Collision Prevention
   const btnTriggerSync = document.getElementById('btnTriggerMt5Sync');
   if (btnTriggerSync) {
     btnTriggerSync.addEventListener('click', async () => {
+      const targetAccInput = document.getElementById('targetAccountInput');
+      const syncPinInput = document.getElementById('syncPinInput');
+      const target_account = targetAccInput ? targetAccInput.value.trim() : '';
+      const sync_pin = syncPinInput ? syncPinInput.value.trim() : '';
+
       btnTriggerSync.disabled = true;
-      btnTriggerSync.textContent = 'Connecting to MT5 Terminal...';
-      showToast('Connecting to MT5...', 'info');
+      btnTriggerSync.textContent = 'Connecting & Verifying MT5...';
+      showToast('Connecting & Verifying MT5...', 'info');
 
       try {
         const res = await fetch('/api/mt5/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ days_back: 180 })
+          body: JSON.stringify({ 
+            days_back: 180,
+            target_account: target_account || null,
+            sync_pin: sync_pin || null
+          })
         });
         const result = await res.json();
 
         if (result.success) {
           const acc = result.account || {};
           const accType = acc.account_type || 'REAL';
-          showToast(`Connected to MT5 (${accType})! Synced ${result.synced_trades} trades.`, 'success');
+          showToast(`Connected to MT5 (${accType} #${acc.login})! Synced ${result.synced_trades} trades.`, 'success');
 
           // Update starting capital from live account balance
           if (acc.balance) {
@@ -119,9 +209,13 @@ function setupMT5Handlers() {
               body: JSON.stringify({ 
                 starting_capital: acc.balance,
                 account_name: `${acc.broker || 'MT5'} (${acc.login})`,
-                account_type: accType
+                account_type: accType,
+                target_account: String(acc.login)
               })
             });
+            if (targetAccInput && !targetAccInput.value) {
+              targetAccInput.value = acc.login;
+            }
           }
 
           await refreshDashboard();
