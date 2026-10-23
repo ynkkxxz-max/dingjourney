@@ -106,9 +106,14 @@ def api_get_config():
 
 @app.post("/api/config")
 def api_save_config(config: ConfigModel):
+    acc_type = (config.account_type or "").lower().strip()
     if config.starting_capital is not None:
+        if acc_type in ("real", "demo"):
+            set_config(f"starting_capital_{acc_type}", str(config.starting_capital))
         set_config("starting_capital", str(config.starting_capital))
     if config.account_name is not None:
+        if acc_type in ("real", "demo"):
+            set_config(f"account_name_{acc_type}", config.account_name)
         set_config("account_name", config.account_name)
     if config.account_type is not None:
         set_config("account_type", config.account_type)
