@@ -431,14 +431,23 @@ async function refreshMT5ModalStatus() {
   }
 }
 
-// Automatic Real-Time MT5 Background Poller (every 2 seconds for instant SL/TP change)
+// Safe MT5 Background Poller with Concurrency Lock
+let isAutoSyncing = false;
 let autoSyncInterval = null;
 let lastKnownBalance = null;
 
 function startMT5AutoSync() {
   if (autoSyncInterval) return;
   autoSyncInterval = setInterval(async () => {
+    if (isAutoSyncing) return;
+    isAutoSyncing = true;
     try {
+      // Check status first to avoid blocking server if MT5 is not connected
+      const statusRes = await fetch('/api/mt5/status');
+      if (!statusRes.ok) return;
+      const statusData = await statusRes.json();
+      if (!statusData.connected) return;
+
       const res = await fetch('/api/mt5/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -448,7 +457,6 @@ function startMT5AutoSync() {
         const data = await res.json();
         if (data.success && data.account) {
           const currentBal = Number(data.account.balance);
-          // If balance changed (e.g. SL or TP hit)
           if (lastKnownBalance !== null && currentBal !== lastKnownBalance) {
             const diff = currentBal - lastKnownBalance;
             const diffStr = diff >= 0 ? `+$${diff.toFixed(2)}` : `-$${Math.abs(diff).toFixed(2)}`;
@@ -468,6 +476,8 @@ function startMT5AutoSync() {
       }
     } catch (e) {
       // background polling - silent
+    } finally {
+      isAutoSyncing = false;
     }
-  }, 2000); // Poll every 2 seconds for instant SL/TP updates!
+  }, 20000); // Safe 20s interval
 }
