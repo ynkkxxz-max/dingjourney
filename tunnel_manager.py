@@ -21,7 +21,7 @@ def run_tunnel():
         print("Starting cloudflared tunnel...")
         try:
             proc = subprocess.Popen(
-                [BIN_PATH, "tunnel", "--url", "http://127.0.0.1:8000"],
+                [BIN_PATH, "tunnel", "--protocol", "http2", "--edge-ip-version", "4", "--url", "http://127.0.0.1:8000"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
