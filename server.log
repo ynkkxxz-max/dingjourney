@@ -684,3 +684,7 @@ INFO:     127.0.0.1:58231 - "POST /api/mt5/sync HTTP/1.1" 200 OK
 INFO:     127.0.0.1:58231 - "POST /api/mt5/sync HTTP/1.1" 200 OK
 INFO:     127.0.0.1:58231 - "POST /api/mt5/sync HTTP/1.1" 200 OK
 INFO:     127.0.0.1:58231 - "POST /api/mt5/sync HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58431 - "POST /api/mt5/sync HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58714 - "POST /api/mt5/sync HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59342 - "POST /api/mt5/sync HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59030 - "POST /api/mt5/sync HTTP/1.1" 200 OK
