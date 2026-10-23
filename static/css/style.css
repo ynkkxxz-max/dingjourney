@@ -874,15 +874,22 @@ body {
   color: var(--text-primary);
 }
 
-/* FORM CONTROLS */
+/* FORM CONTROLS & SELECTORS */
+.form-selectors-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 2px;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 14px;
 }
 
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .form-group.full-width {
@@ -891,12 +898,12 @@ body {
 
 .form-label {
   display: block;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.6px;
 }
 
 .form-input, .form-select, .form-textarea {
@@ -904,48 +911,130 @@ body {
   background: #0c121d;
   border: 1px solid #1f2c42;
   border-radius: var(--radius-sm);
-  padding: 12px 14px;
+  padding: 0 14px;
+  height: 44px;
+  min-height: 44px;
+  line-height: 44px;
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+input[type="date"].form-input,
+.date-input {
+  -webkit-appearance: none;
+  appearance: none;
+  display: flex;
+  align-items: center;
+  height: 44px;
+  min-height: 44px;
+  line-height: 44px;
+  padding: 0 12px;
+  color-scheme: dark;
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
   border-color: var(--color-profit);
   background: #0f1624;
+  box-shadow: 0 0 10px rgba(0, 229, 153, 0.15);
 }
 
 .radio-group {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  width: 100%;
 }
 
 .radio-btn {
   flex: 1;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  gap: 8px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0 10px;
   border-radius: var(--radius-sm);
   border: 1.5px solid #202e46;
   background: #0d131f;
   cursor: pointer;
   font-weight: 700;
+  font-size: 13px;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.radio-btn:hover {
+  border-color: #2e4366;
+  color: var(--text-primary);
+}
+
+.radio-btn .btn-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
   transition: all 0.2s ease;
 }
 
+.dot-buy { background: var(--color-profit); box-shadow: 0 0 6px rgba(0, 229, 153, 0.5); }
+.dot-sell { background: var(--color-loss); box-shadow: 0 0 6px rgba(255, 71, 87, 0.5); }
+.dot-real { background: var(--color-profit); box-shadow: 0 0 6px rgba(0, 229, 153, 0.5); }
+.dot-demo { background: var(--color-gold); box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); }
+
 .radio-btn.buy-active {
   border-color: var(--color-profit);
-  background: rgba(0, 229, 153, 0.1);
+  background: rgba(0, 229, 153, 0.12);
   color: var(--color-profit);
+  box-shadow: 0 0 12px rgba(0, 229, 153, 0.2);
+}
+.radio-btn.buy-active .dot-buy {
+  box-shadow: 0 0 8px var(--color-profit);
+  transform: scale(1.15);
 }
 
 .radio-btn.sell-active {
   border-color: var(--color-loss);
-  background: rgba(255, 71, 87, 0.1);
+  background: rgba(255, 71, 87, 0.12);
   color: var(--color-loss);
+  box-shadow: 0 0 12px rgba(255, 71, 87, 0.2);
+}
+.radio-btn.sell-active .dot-sell {
+  box-shadow: 0 0 8px var(--color-loss);
+  transform: scale(1.15);
+}
+
+.radio-btn.real-active {
+  border-color: var(--color-profit) !important;
+  background: rgba(0, 229, 153, 0.12) !important;
+  color: var(--color-profit) !important;
+  box-shadow: 0 0 12px rgba(0, 229, 153, 0.2);
+}
+.radio-btn.real-active .dot-real {
+  box-shadow: 0 0 8px var(--color-profit);
+  transform: scale(1.15);
+}
+
+.radio-btn.demo-active {
+  border-color: var(--color-gold) !important;
+  background: rgba(245, 158, 11, 0.12) !important;
+  color: var(--color-gold) !important;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.2);
+}
+.radio-btn.demo-active .dot-demo {
+  box-shadow: 0 0 8px var(--color-gold);
+  transform: scale(1.15);
 }
 
 /* TAB NAVIGATION (FOR MODALS OR VIEWS) */
@@ -1316,6 +1405,60 @@ body {
 
   .summary-card-annual .footer {
     font-size: 12px;
+  }
+
+  /* MODAL RESPONSIVE STYLES FOR PHONES */
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-box {
+    padding: 20px 16px;
+    border-radius: 16px;
+    max-width: 100%;
+    max-height: 92vh;
+  }
+
+  .modal-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+  }
+
+  .form-selectors-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 2px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .form-label {
+    font-size: 10.5px;
+    margin-bottom: 5px;
+  }
+
+  .radio-btn {
+    height: 44px;
+    min-height: 44px;
+    font-size: 13px;
+  }
+
+  .form-input {
+    height: 44px;
+    min-height: 44px;
+    font-size: 13.5px;
+    padding: 0 12px;
   }
 }
 
