@@ -302,7 +302,14 @@ if os.path.exists(STATIC_DIR):
 def serve_index():
     index_file = os.path.join(STATIC_DIR, "index.html")
     if os.path.exists(index_file):
-        return FileResponse(index_file)
+        return FileResponse(
+            index_file,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     return JSONResponse({"status": "DingJourney API is running. Static files loading..."})
 
 @app.get("/manifest.json")
