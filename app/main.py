@@ -66,6 +66,7 @@ class TradeModel(BaseModel):
     source: Optional[str] = "manual"
     account_type: Optional[str] = "REAL"
     account_number: Optional[str] = ""
+    account_id: Optional[str] = ""
 
 class ConfigModel(BaseModel):
     starting_capital: Optional[float] = None
@@ -74,6 +75,7 @@ class ConfigModel(BaseModel):
     currency: Optional[str] = None
     sync_pin: Optional[str] = None
     target_account: Optional[str] = None
+    account_id: Optional[str] = None
 
 class MT5SyncModel(BaseModel):
     days_back: Optional[int] = 180
@@ -100,18 +102,44 @@ def api_status():
 
 
 @app.get("/api/config")
-def api_get_config():
-    return get_config()
+def api_get_config(account_id: Optional[str] = None, account_type: Optional[str] = None):
+    cfg = get_config()
+    acc_id = (account_id or "").strip()
+    acc_type = (account_type or "").lower().strip()
+    if acc_id:
+        cap = cfg.get(f"starting_capital_{acc_id}_{acc_type}") or cfg.get(f"starting_capital_{acc_id}")
+        if cap:
+            cfg["starting_capital"] = cap
+        name = cfg.get(f"account_name_{acc_id}_{acc_type}") or cfg.get(f"account_name_{acc_id}")
+        if name:
+            cfg["account_name"] = name
+    elif acc_type:
+        cap = cfg.get(f"starting_capital_{acc_type}")
+        if cap:
+            cfg["starting_capital"] = cap
+        name = cfg.get(f"account_name_{acc_type}")
+        if name:
+            cfg["account_name"] = name
+    return cfg
 
 
 @app.post("/api/config")
 def api_save_config(config: ConfigModel):
     acc_type = (config.account_type or "").lower().strip()
+    acc_id = (config.account_id or "").strip()
     if config.starting_capital is not None:
+        if acc_id and acc_type:
+            set_config(f"starting_capital_{acc_id}_{acc_type}", str(config.starting_capital))
+        if acc_id:
+            set_config(f"starting_capital_{acc_id}", str(config.starting_capital))
         if acc_type in ("real", "demo"):
             set_config(f"starting_capital_{acc_type}", str(config.starting_capital))
         set_config("starting_capital", str(config.starting_capital))
     if config.account_name is not None:
+        if acc_id and acc_type:
+            set_config(f"account_name_{acc_id}_{acc_type}", config.account_name)
+        if acc_id:
+            set_config(f"account_name_{acc_id}", config.account_name)
         if acc_type in ("real", "demo"):
             set_config(f"account_name_{acc_type}", config.account_name)
         set_config("account_name", config.account_name)
@@ -127,8 +155,8 @@ def api_save_config(config: ConfigModel):
 
 
 @app.get("/api/trades")
-def api_get_trades(year: Optional[int] = None, month: Optional[int] = None, account_type: Optional[str] = None):
-    trades = get_trades(year=year, month=month, account_type=account_type)
+def api_get_trades(year: Optional[int] = None, month: Optional[int] = None, account_type: Optional[str] = None, account_id: Optional[str] = None):
+    trades = get_trades(year=year, month=month, account_type=account_type, account_id=account_id)
     return {"trades": trades}
 
 
@@ -145,14 +173,14 @@ def api_delete_trade(trade_id: int):
 
 
 @app.post("/api/trades/clear")
-def api_clear_trades(account_type: Optional[str] = None):
-    clear_all_trades(account_type=account_type)
+def api_clear_trades(account_type: Optional[str] = None, account_id: Optional[str] = None):
+    clear_all_trades(account_type=account_type, account_id=account_id)
     return {"success": True}
 
 
 @app.get("/api/stats")
-def api_get_stats(year: Optional[int] = None, month: Optional[int] = None, account_type: Optional[str] = None):
-    stats = get_stats(year=year, month=month, account_type=account_type)
+def api_get_stats(year: Optional[int] = None, month: Optional[int] = None, account_type: Optional[str] = None, account_id: Optional[str] = None):
+    stats = get_stats(year=year, month=month, account_type=account_type, account_id=account_id)
     return stats
 
 
