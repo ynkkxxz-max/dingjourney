@@ -54,7 +54,7 @@ def main():
         try:
             tunnel_log = open(LOG_FILE, "w", encoding="utf-8")
             tunnel_proc = subprocess.Popen(
-                [BIN_CLOUDFLARED, "tunnel", "--url", "http://127.0.0.1:8000"],
+                [BIN_CLOUDFLARED, "tunnel", "--protocol", "http2", "--edge-ip-version", "4", "--url", "http://127.0.0.1:8000"],
                 stdout=tunnel_log,
                 stderr=subprocess.STDOUT,
                 text=True
@@ -123,7 +123,24 @@ def main():
             if server_proc.poll() is not None:
                 print("[!] Server stopped unexpectedly.")
                 break
-            time.sleep(1)
+            
+            # Auto-restart tunnel if connection drops (24/7 Keep-Alive)
+            if tunnel_proc and tunnel_proc.poll() is not None:
+                print("[!] Tunnel disconnected. Reconnecting in 3s...", flush=True)
+                time.sleep(3)
+                try:
+                    tunnel_log = open(LOG_FILE, "a", encoding="utf-8")
+                    tunnel_proc = subprocess.Popen(
+                        [BIN_CLOUDFLARED, "tunnel", "--protocol", "http2", "--edge-ip-version", "4", "--url", "http://127.0.0.1:8000"],
+                        stdout=tunnel_log,
+                        stderr=subprocess.STDOUT,
+                        text=True
+                    )
+                    print("[✓] Tunnel reconnected successfully.", flush=True)
+                except Exception as e:
+                    print(f"[!] Reconnect error: {e}", flush=True)
+                    
+            time.sleep(2)
     except KeyboardInterrupt:
         cleanup()
 
