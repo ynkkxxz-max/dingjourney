@@ -58,10 +58,9 @@
           <!-- Populated by JS -->
         </select>
 
-        <!-- Account Filter Tabs (All / Real / Demo) -->
+        <!-- Account Filter Tabs (Real / Demo) -->
         <div class="account-filter-tabs" id="accountFilterTabs" title="Filter trades by Account Type">
-          <button class="account-tab active" data-type="ALL">All</button>
-          <button class="account-tab real" data-type="REAL">🟢 Real</button>
+          <button class="account-tab real active" data-type="REAL">🟢 Real</button>
           <button class="account-tab demo" data-type="DEMO">🟡 Demo</button>
         </div>
 
@@ -416,8 +415,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/static/js/app.js?v=8"></script>
-  <script src="/static/js/mt5.js?v=8"></script>
+  <script src="/static/js/app.js?v=9"></script>
+  <script src="/static/js/mt5.js?v=9"></script>
   <script>
     // Unregister legacy service workers and clear caches to guarantee fresh execution
     if ('serviceWorker' in navigator) {
