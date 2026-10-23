@@ -77,6 +77,10 @@ def init_db():
         cursor.execute("ALTER TABLE trades ADD COLUMN account_number TEXT DEFAULT ''")
     except Exception:
         pass
+    try:
+        cursor.execute("ALTER TABLE trades ADD COLUMN account_id TEXT DEFAULT ''")
+    except Exception:
+        pass
 
     # Update demo trades to DEMO account_type
     try:
@@ -84,26 +88,17 @@ def init_db():
     except Exception:
         pass
 
-    # Seed default config if empty
-    cursor.execute("SELECT value FROM config WHERE key = 'starting_capital'")
-    if not cursor.fetchone():
-        cursor.execute("INSERT INTO config (key, value) VALUES ('starting_capital', '10000.00')")
-        cursor.execute("INSERT INTO config (key, value) VALUES ('account_name', 'Base Account')")
-        cursor.execute("INSERT INTO config (key, value) VALUES ('account_type', 'REAL')")
-        cursor.execute("INSERT INTO config (key, value) VALUES ('currency', '$')")
-
-    # Seed Sync PIN & Bound Target Account
-    cursor.execute("SELECT value FROM config WHERE key = 'sync_pin'")
-    if not cursor.fetchone():
-        cursor.execute("INSERT INTO config (key, value) VALUES ('sync_pin', 'JN-8899')")
-    cursor.execute("SELECT value FROM config WHERE key = 'target_account'")
-    if not cursor.fetchone():
-        cursor.execute("INSERT INTO config (key, value) VALUES ('target_account', '')")
-
-    # Seed sample trades matching the screenshot if no trades exist yet
-    cursor.execute("SELECT COUNT(*) as count FROM trades")
-    if cursor.fetchone()["count"] == 0:
-        seed_sample_trades(cursor)
+    # Seed default config safely
+    defaults = [
+        ('starting_capital', '10000.00'),
+        ('account_name', 'Base Account'),
+        ('account_type', 'REAL'),
+        ('currency', '$'),
+        ('sync_pin', 'JN-8899'),
+        ('target_account', '')
+    ]
+    for k, v in defaults:
+        cursor.execute("INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)", (k, v))
         
     conn.commit()
     conn.close()
@@ -139,7 +134,7 @@ def set_config(key: str, value: str):
     conn.commit()
     conn.close()
 
-def get_trades(year: Optional[int] = None, month: Optional[int] = None, account_type: Optional[str] = None) -> List[Dict[str, Any]]:
+def get_trades(year: Optional[int] = None, month: Optional[int] = None, account_type: Optional[str] = None, account_id: Optional[str] = None) -> List[Dict[str, Any]]:
     conn = get_db_connection()
     conditions = []
     params = []
@@ -156,6 +151,12 @@ def get_trades(year: Optional[int] = None, month: Optional[int] = None, account_
     if account_type and account_type.upper() in ("REAL", "DEMO"):
         conditions.append("UPPER(account_type) = ?")
         params.append(account_type.upper())
+
+    if account_id and account_id.strip():
+        acc = account_id.strip()
+        conditions.append("(account_id = ? OR account_number = ?)")
+        params.append(acc)
+        params.append(acc)
         
     query = "SELECT * FROM trades"
     if conditions:
@@ -175,17 +176,19 @@ def insert_or_update_trade(trade: Dict[str, Any]) -> int:
     
     raw_ticket = str(trade.get("ticket") or int(datetime.now().timestamp() * 1000)).strip()
     account_type = str(trade.get("account_type", "REAL")).upper()
-    account_number = str(trade.get("account_number", "")).strip()
+    account_id = str(trade.get("account_id") or trade.get("account_number", "")).strip()
+    account_number = str(trade.get("account_number") or account_id).strip()
     
     # Composite ticket identifier to isolate across different MT5 accounts
-    if account_number and not raw_ticket.startswith(f"{account_number}_"):
-        ticket = f"{account_number}_{raw_ticket}"
+    prefix = account_number or account_id
+    if prefix and not raw_ticket.startswith(f"{prefix}_"):
+        ticket = f"{prefix}_{raw_ticket}"
     else:
         ticket = raw_ticket
     
     cursor.execute("""
-    INSERT INTO trades (ticket, symbol, trade_type, lots, open_price, close_price, open_time, close_time, close_date, profit, commission, swap, comment, source, account_type, account_number)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO trades (ticket, symbol, trade_type, lots, open_price, close_price, open_time, close_time, close_date, profit, commission, swap, comment, source, account_type, account_number, account_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(ticket) DO UPDATE SET
         symbol = excluded.symbol,
         trade_type = excluded.trade_type,
@@ -200,7 +203,8 @@ def insert_or_update_trade(trade: Dict[str, Any]) -> int:
         comment = excluded.comment,
         source = excluded.source,
         account_type = excluded.account_type,
-        account_number = excluded.account_number
+        account_number = excluded.account_number,
+        account_id = excluded.account_id
     """, (
         ticket,
         trade.get("symbol", "UNKNOWN").upper(),
@@ -217,7 +221,8 @@ def insert_or_update_trade(trade: Dict[str, Any]) -> int:
         trade.get("comment", ""),
         trade.get("source", "manual"),
         account_type,
-        account_number
+        account_number,
+        account_id
     ))
     conn.commit()
     trade_id = cursor.lastrowid
@@ -230,24 +235,45 @@ def delete_trade(trade_id: int):
     conn.commit()
     conn.close()
 
-def clear_all_trades(account_type: Optional[str] = None):
+def clear_all_trades(account_type: Optional[str] = None, account_id: Optional[str] = None):
     conn = get_db_connection()
+    conditions = []
+    params = []
     if account_type and account_type.upper() in ("REAL", "DEMO"):
-        conn.execute("DELETE FROM trades WHERE UPPER(account_type) = ?", (account_type.upper(),))
-    else:
-        conn.execute("DELETE FROM trades")
+        conditions.append("UPPER(account_type) = ?")
+        params.append(account_type.upper())
+    if account_id and account_id.strip():
+        conditions.append("(account_id = ? OR account_number = ?)")
+        params.append(account_id.strip())
+        params.append(account_id.strip())
+    
+    query = "DELETE FROM trades"
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+    conn.execute(query, params)
     conn.commit()
     conn.close()
 
-def get_stats(year: Optional[int] = None, month: Optional[int] = None, account_type: Optional[str] = None) -> Dict[str, Any]:
-    trades = get_trades(year=year, month=month, account_type=account_type)
-    all_year_trades = get_trades(year=year, account_type=account_type) if year else trades
+def get_stats(year: Optional[int] = None, month: Optional[int] = None, account_type: Optional[str] = None, account_id: Optional[str] = None) -> Dict[str, Any]:
+    trades = get_trades(year=year, month=month, account_type=account_type, account_id=account_id)
+    all_year_trades = get_trades(year=year, account_type=account_type, account_id=account_id) if year else trades
     config = get_config()
     
-    cap_key = f"starting_capital_{account_type.lower()}" if account_type else "starting_capital"
-    name_key = f"account_name_{account_type.lower()}" if account_type else "account_name"
-    starting_capital = float(config.get(cap_key) or config.get("starting_capital", 10000.0))
-    account_name = config.get(name_key) or config.get("account_name", "Base Account")
+    acc_key = (account_id or "").strip()
+    type_key = (account_type or "REAL").lower().strip()
+    
+    if acc_key:
+        cap_val = config.get(f"starting_capital_{acc_key}_{type_key}") or config.get(f"starting_capital_{acc_key}")
+    else:
+        cap_val = None
+    if not cap_val:
+        cap_val = config.get(f"starting_capital_{type_key}") or config.get("starting_capital", 10000.0)
+    starting_capital = float(cap_val)
+    
+    if acc_key:
+        account_name = config.get(f"account_name_{acc_key}_{type_key}") or config.get(f"account_name_{acc_key}") or ("📱 Phone Account" if "phone" in acc_key else ("💻 PC Account" if "pc" in acc_key else f"Account #{acc_key}"))
+    else:
+        account_name = config.get(f"account_name_{type_key}") or config.get("account_name", "Base Account")
     
     # 1. Day-based Evaluation: Each trading day counts as 1 unit
     # (e.g. 7 positions on same day with net loss = 1 Loss (1L))
@@ -281,7 +307,10 @@ def get_stats(year: Optional[int] = None, month: Optional[int] = None, account_t
     current_balance = starting_capital + net_pnl
 
     conn = get_db_connection()
-    if account_type:
+    mt5_row = None
+    if acc_key and account_type:
+        mt5_row = conn.execute("SELECT balance, equity FROM mt5_account WHERE (account_number = ? OR account_type = ?) AND UPPER(account_type) = ?", (acc_key, account_type.upper(), account_type.upper())).fetchone()
+    elif account_type:
         mt5_row = conn.execute("SELECT balance, equity FROM mt5_account WHERE UPPER(account_type) = ?", (account_type.upper(),)).fetchone()
     else:
         mt5_row = conn.execute("SELECT balance, equity FROM mt5_account WHERE id = 1").fetchone()
