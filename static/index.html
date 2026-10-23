@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" media="print" onload="this.media='all'">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="/static/css/style.css?v=5">
+  <link rel="stylesheet" href="/static/css/style.css?v=7">
 </head>
 <body>
 
@@ -206,19 +206,32 @@
       </div>
 
       <form id="addTradeForm">
-        <div class="form-grid">
+        <!-- Direction & Account Type Selectors -->
+        <div class="form-selectors-row">
           <div class="form-group">
             <label class="form-label">Trade Direction</label>
             <div class="radio-group">
-              <div class="radio-btn buy-active" id="btnTypeBuy" style="flex: 1; text-align: center;">BUY</div>
-              <div class="radio-btn" id="btnTypeSell" style="flex: 1; text-align: center;">SELL</div>
+              <div class="radio-btn buy-active" id="btnTypeBuy">
+                <span class="btn-dot dot-buy"></span>
+                <span>BUY</span>
+              </div>
+              <div class="radio-btn" id="btnTypeSell">
+                <span class="btn-dot dot-sell"></span>
+                <span>SELL</span>
+              </div>
             </div>
           </div>
           <div class="form-group">
             <label class="form-label">Account Type</label>
             <div class="radio-group">
-              <div class="radio-btn real-active" id="btnAccReal" style="flex: 1; text-align: center;">🟢 REAL</div>
-              <div class="radio-btn" id="btnAccDemo" style="flex: 1; text-align: center;">🟡 DEMO</div>
+              <div class="radio-btn real-active" id="btnAccReal">
+                <span class="btn-dot dot-real"></span>
+                <span>REAL</span>
+              </div>
+              <div class="radio-btn" id="btnAccDemo">
+                <span class="btn-dot dot-demo"></span>
+                <span>DEMO</span>
+              </div>
             </div>
           </div>
         </div>
@@ -237,11 +250,11 @@
         <div class="form-grid">
           <div class="form-group">
             <label class="form-label">Close Date</label>
-            <input type="date" class="form-input" id="tradeDateInput" required>
+            <input type="date" class="form-input date-input" id="tradeDateInput" required>
           </div>
           <div class="form-group">
             <label class="form-label">Net Profit / Loss ($)</label>
-            <input type="number" step="0.01" class="form-input" id="tradeProfitInput" placeholder="e.g. 815.00 or -250.00" required>
+            <input type="number" step="0.01" class="form-input" id="tradeProfitInput" placeholder="e.g. 815.00 or -250" required>
           </div>
         </div>
 
@@ -250,8 +263,8 @@
           <input type="text" class="form-input" id="tradeNotesInput" placeholder="e.g. London breakout TP hit, Trend retest">
         </div>
 
-        <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
-          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">
+        <div style="margin-top: 22px;">
+          <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; height: 48px; font-size: 15px; font-weight: 700;">
             Save Trade to Journal
           </button>
         </div>
@@ -403,8 +416,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/static/js/app.js?v=7"></script>
-  <script src="/static/js/mt5.js?v=7"></script>
+  <script src="/static/js/app.js?v=8"></script>
+  <script src="/static/js/mt5.js?v=8"></script>
   <script>
     // Unregister legacy service workers and clear caches to guarantee fresh execution
     if ('serviceWorker' in navigator) {
