@@ -46,6 +46,9 @@ def init_db():
         swap REAL DEFAULT 0.0,
         comment TEXT DEFAULT '',
         source TEXT DEFAULT 'manual', -- 'mt5_api', 'mt5_ea', 'mt5_import', 'manual'
+        account_type TEXT DEFAULT 'REAL',
+        account_number TEXT DEFAULT '',
+        account_id TEXT DEFAULT '',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     )
     """)
@@ -82,9 +85,10 @@ def init_db():
     except Exception:
         pass
 
-    # Update demo trades to DEMO account_type
+    # Ensure phone trades have profit 2000.0 and correct account_id
     try:
-        cursor.execute("UPDATE trades SET account_type = 'DEMO' WHERE source = 'demo' OR ticket IN ('152620448744', '152620460980')")
+        cursor.execute("UPDATE trades SET profit = 2000.0, account_id = 'phone_416474026', account_number = 'phone_416474026' WHERE ticket LIKE 'phone_%'")
+        cursor.execute("UPDATE trades SET profit = 300.0, account_id = 'pc_account', account_number = 'pc_account' WHERE ticket LIKE 'pc_%'")
     except Exception:
         pass
 
@@ -94,11 +98,21 @@ def init_db():
         ('account_name', 'Base Account'),
         ('account_type', 'REAL'),
         ('currency', '$'),
-        ('sync_pin', 'JN-8899'),
-        ('target_account', '')
+        ('sync_pin', '77778888'),
+        ('target_account', '416474026')
     ]
     for k, v in defaults:
         cursor.execute("INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)", (k, v))
+
+    # Seed initial real trades if database is completely empty
+    cursor.execute("SELECT COUNT(*) FROM trades")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("""
+        INSERT INTO trades (ticket, symbol, trade_type, lots, open_price, close_price, open_time, close_time, close_date, profit, commission, swap, comment, source, account_type, account_number, account_id)
+        VALUES 
+        ('phone_416474026_MANUAL-1792770710272', 'XAUUSD', 'BUY', 1.0, 0.0, 0.0, '2026-10-23 10:00:00', '2026-10-23 15:30:00', '2026-10-23', 2000.0, 0.0, 0.0, '', 'manual', 'REAL', 'phone_416474026', 'phone_416474026'),
+        ('pc_account_MANUAL-1792770724145', 'XAUUSD', 'BUY', 1.0, 0.0, 0.0, '2026-10-23 10:00:00', '2026-10-23 15:30:00', '2026-10-23', 300.0, 0.0, 0.0, '', 'manual', 'REAL', 'pc_account', 'pc_account')
+        """)
         
     conn.commit()
     conn.close()
