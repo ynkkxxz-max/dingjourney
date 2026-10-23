@@ -243,7 +243,11 @@ def get_stats(year: Optional[int] = None, month: Optional[int] = None, account_t
     trades = get_trades(year=year, month=month, account_type=account_type)
     all_year_trades = get_trades(year=year, account_type=account_type) if year else trades
     config = get_config()
-    starting_capital = float(config.get("starting_capital", 10000.0))
+    
+    cap_key = f"starting_capital_{account_type.lower()}" if account_type else "starting_capital"
+    name_key = f"account_name_{account_type.lower()}" if account_type else "account_name"
+    starting_capital = float(config.get(cap_key) or config.get("starting_capital", 10000.0))
+    account_name = config.get(name_key) or config.get("account_name", "Base Account")
     
     # 1. Day-based Evaluation: Each trading day counts as 1 unit
     # (e.g. 7 positions on same day with net loss = 1 Loss (1L))
@@ -277,7 +281,10 @@ def get_stats(year: Optional[int] = None, month: Optional[int] = None, account_t
     current_balance = starting_capital + net_pnl
 
     conn = get_db_connection()
-    mt5_row = conn.execute("SELECT balance, equity FROM mt5_account WHERE id = 1").fetchone()
+    if account_type:
+        mt5_row = conn.execute("SELECT balance, equity FROM mt5_account WHERE UPPER(account_type) = ?", (account_type.upper(),)).fetchone()
+    else:
+        mt5_row = conn.execute("SELECT balance, equity FROM mt5_account WHERE id = 1").fetchone()
     conn.close()
     if mt5_row and mt5_row["balance"] is not None:
         current_balance = float(mt5_row["balance"])
@@ -309,8 +316,8 @@ def get_stats(year: Optional[int] = None, month: Optional[int] = None, account_t
         "profit_factor": round(profit_factor, 2),
         "gross_win": round(gross_win, 2),
         "gross_loss": round(gross_loss, 2),
-        "account_type": config.get("account_type", "REAL"),
-        "account_name": config.get("account_name", "Base Account"),
+        "account_type": account_type or config.get("account_type", "REAL"),
+        "account_name": account_name,
         # Annual breakdown
         "annual_net_pnl": annual_net_pnl,
         "annual_roi": round(annual_roi, 1),
