@@ -293,17 +293,40 @@
 
   <!-- MODAL: EDIT CAPITAL -->
   <div class="modal-overlay" id="capitalModal">
-    <div class="modal-box" style="max-width: 420px;">
+    <div class="modal-box" style="max-width: 440px;">
       <div class="modal-header">
-        <h2 class="modal-title">Starting Capital</h2>
+        <h2 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+          <span>⚙️</span>
+          <span>Account & Capital Settings</span>
+        </h2>
         <button class="modal-close-btn" id="closeCapitalModal">&times;</button>
       </div>
+
+      <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; font-size: 12px; color: #94a3b8; display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 16px;">🔒</span>
+        <span>PC and Phone are strictly isolated. Trades and balances will never mix!</span>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label">Account / Device Identifier</label>
+        <input type="text" class="form-input" id="deviceIdInput" placeholder="e.g. phone_416474026 or pc_account" style="font-family: var(--font-mono); font-size: 13px;">
+        <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 4px;">
+          Unique account ID for this device (Phone vs PC).
+        </span>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label">Account Label</label>
+        <input type="text" class="form-input" id="accountNameInput" placeholder="e.g. 📱 Phone Real (416474026)">
+      </div>
+
       <div class="form-group">
         <label class="form-label">Initial Account Balance ($)</label>
         <input type="number" step="100" class="form-input" id="capitalInput" value="10000.00">
       </div>
-      <button class="btn-primary" id="btnSaveCapital" style="width: 100%; justify-content: center; margin-top: 16px;">
-        Update Capital
+
+      <button class="btn-primary" id="btnSaveCapital" style="width: 100%; justify-content: center; margin-top: 20px; height: 44px; font-weight: 700;">
+        Save & Apply
       </button>
     </div>
   </div>
@@ -415,8 +438,8 @@
   </div>
 
   <!-- Scripts -->
-  <script src="/static/js/app.js?v=9"></script>
-  <script src="/static/js/mt5.js?v=9"></script>
+  <script src="/static/js/app.js?v=10"></script>
+  <script src="/static/js/mt5.js?v=10"></script>
   <script>
     // Unregister legacy service workers and clear caches to guarantee fresh execution
     if ('serviceWorker' in navigator) {
