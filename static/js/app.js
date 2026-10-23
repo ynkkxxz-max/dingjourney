@@ -501,6 +501,14 @@ function openAddTradeModal(prefillDate = null) {
   }
 
   setTradeType('BUY');
+  const btnReal = document.getElementById('btnAccReal');
+  const btnDemo = document.getElementById('btnAccDemo');
+  if (btnReal && btnDemo) {
+    state.manualAccountType = 'REAL';
+    btnReal.classList.add('real-active');
+    btnDemo.classList.remove('demo-active');
+  }
+
   document.getElementById('tradeSymbolInput').value = 'XAUUSD';
   document.getElementById('tradeLotsInput').value = '1.0';
   document.getElementById('tradeProfitInput').value = '';
