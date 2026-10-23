@@ -103,24 +103,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-def seed_sample_trades(cursor):
-    """Seed the trades shown in the screenshot for October 2026 so user immediately sees their dashboard!"""
-    sample_trades = [
-        # Mon Oct 1 2026 (or Thu Oct 1 depending on calendar, matches screenshot: Mon 1st: +815.00)
-        ("100101", "XAUUSD", "BUY", 1.0, 2650.0, 2658.15, "2026-10-01 08:30:00", "2026-10-01 14:45:00", "2026-10-01", 815.00, -5.0, 0.0, "Trend break"),
-        ("100102", "EURUSD", "SELL", 2.0, 1.0920, 1.0932, "2026-10-02 10:15:00", "2026-10-02 16:30:00", "2026-10-02", -250.00, -6.0, 0.0, "Pullback stop hit"),
-        ("100105", "XAUUSD", "BUY", 0.5, 2655.0, 2661.40, "2026-10-05 09:00:00", "2026-10-05 15:20:00", "2026-10-05", 320.00, -3.0, 0.0, "London breakout"),
-        ("100106", "BTCUSD", "BUY", 0.2, 65000.0, 68750.0, "2026-10-06 11:00:00", "2026-10-06 20:00:00", "2026-10-06", 750.00, -4.0, 0.0, "Weekend momentum"),
-        ("100108", "GBPUSD", "SELL", 1.5, 1.3050, 1.3070, "2026-10-08 08:00:00", "2026-10-08 11:30:00", "2026-10-08", -300.00, -5.0, 0.0, "News volatility"),
-        ("100112", "US30", "BUY", 0.2, 42000.0, 42110.0, "2026-10-12 14:30:00", "2026-10-12 17:00:00", "2026-10-12", 220.00, -2.0, 0.0, "US session sweep"),
-        ("100114", "XAUUSD", "BUY", 1.2, 2660.0, 2667.50, "2026-10-14 13:00:00", "2026-10-14 19:30:00", "2026-10-14", 900.00, -6.0, 0.0, "Gold rally TP hit"),
-        ("100115", "USDJPY", "BUY", 1.0, 149.50, 149.35, "2026-10-15 07:30:00", "2026-10-15 12:10:00", "2026-10-15", -130.00, -4.0, 0.0, "Resistance rejection")
-    ]
-    for t in sample_trades:
-        cursor.execute("""
-        INSERT OR IGNORE INTO trades (ticket, symbol, trade_type, lots, open_price, close_price, open_time, close_time, close_date, profit, commission, swap, comment, source)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'demo')
-        """, t)
 
 def get_config() -> Dict[str, str]:
     conn = get_db_connection()
