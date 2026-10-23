@@ -21,6 +21,24 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December"
 ];
 
+// Device & Account Workspace Identifier (Isolates Phone from PC)
+function getDeviceId() {
+  let id = localStorage.getItem('dingjourney_device_account');
+  if (!id) {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    // On phone default to phone_416474026 (matching user's phone account), on PC default to pc_account
+    id = isMobile ? 'phone_416474026' : 'pc_account';
+    localStorage.setItem('dingjourney_device_account', id);
+  }
+  return id;
+}
+
+function setDeviceId(newId) {
+  if (newId && newId.trim()) {
+    localStorage.setItem('dingjourney_device_account', newId.trim());
+  }
+}
+
 // Safe listener helper to prevent any null reference exceptions
 function addListener(id, event, handler) {
   const el = document.getElementById(id);
@@ -156,8 +174,12 @@ function setupEventListeners() {
 
   // Edit Capital Button
   addListener('btnEditCapital', 'click', () => {
+    const devInput = document.getElementById('deviceIdInput');
     const capInput = document.getElementById('capitalInput');
+    const nameInput = document.getElementById('accountNameInput');
+    if (devInput) devInput.value = getDeviceId();
     if (capInput) capInput.value = state.stats.starting_capital || 10000;
+    if (nameInput) nameInput.value = state.stats.account_name || '';
     openModal('capitalModal');
   });
 
@@ -166,20 +188,32 @@ function setupEventListeners() {
   });
 
   addListener('btnSaveCapital', 'click', async () => {
+    const devInput = document.getElementById('deviceIdInput');
     const capInput = document.getElementById('capitalInput');
+    const nameInput = document.getElementById('accountNameInput');
+    
+    const newDevId = devInput ? devInput.value.trim() : getDeviceId();
+    if (newDevId) {
+      setDeviceId(newDevId);
+    }
+    
     const newCapital = capInput ? parseFloat(capInput.value) : NaN;
+    const newName = nameInput ? nameInput.value.trim() : '';
+    
     if (!isNaN(newCapital) && newCapital > 0) {
       await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           starting_capital: newCapital,
-          account_type: state.accountFilter
+          account_name: newName,
+          account_type: state.accountFilter,
+          account_id: getDeviceId()
         })
       });
       closeModal('capitalModal');
       await refreshDashboard();
-      showToast(`${state.accountFilter} Starting Capital updated!`, 'success');
+      showToast(`${state.accountFilter} Account & Capital updated!`, 'success');
     }
   });
 
@@ -233,7 +267,8 @@ function setTradeType(type) {
 
 async function loadConfig() {
   try {
-    const res = await fetch('/api/config');
+    const devId = getDeviceId();
+    const res = await fetch(`/api/config?account_id=${encodeURIComponent(devId)}&account_type=${encodeURIComponent(state.accountFilter)}`);
     state.config = await res.json();
   } catch (err) {
     console.error('Failed to load config:', err);
@@ -242,7 +277,8 @@ async function loadConfig() {
 
 async function refreshDashboard() {
   try {
-    const filterParam = `&account_type=${state.accountFilter}`;
+    const devId = getDeviceId();
+    const filterParam = `&account_type=${encodeURIComponent(state.accountFilter)}&account_id=${encodeURIComponent(devId)}`;
 
     // Fetch Stats & Trades in parallel for 2x faster load
     const [statsRes, tradesRes] = await Promise.all([
@@ -273,6 +309,7 @@ async function refreshDashboard() {
 function renderKpis() {
   const s = state.stats;
   const curr = '$';
+  const devId = getDeviceId();
   // 1. Starting Capital & Account Type (REAL / DEMO)
   document.getElementById('kpiStartingCapital').textContent = `${curr}${formatMoney(s.starting_capital)}`;
   const accType = state.accountFilter;
@@ -283,7 +320,9 @@ function renderKpis() {
   }
   const accNameEl = document.getElementById('kpiAccountName');
   if (accNameEl) {
-    accNameEl.textContent = s.account_name || `${accType} Account`;
+    const isPhone = devId.toLowerCase().includes('phone') || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const defaultLabel = isPhone ? `📱 Phone (${devId})` : `💻 PC (${devId})`;
+    accNameEl.textContent = s.account_name || defaultLabel;
   }
 
   // 2. Monthly Net P&L
@@ -526,6 +565,7 @@ async function submitNewTrade() {
   const lots = parseFloat(document.getElementById('tradeLotsInput').value) || 0.1;
   const profit = parseFloat(document.getElementById('tradeProfitInput').value) || 0.0;
   const comment = document.getElementById('tradeNotesInput').value.trim();
+  const devId = getDeviceId();
 
   const tradeData = {
     ticket: `MANUAL-${Date.now()}`,
@@ -542,7 +582,9 @@ async function submitNewTrade() {
     swap: 0.0,
     comment: comment,
     source: 'manual',
-    account_type: state.manualAccountType || 'REAL'
+    account_type: state.manualAccountType || 'REAL',
+    account_id: devId,
+    account_number: devId
   };
 
   try {
