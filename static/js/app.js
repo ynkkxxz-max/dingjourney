@@ -12,7 +12,7 @@ const state = {
   config: {},
   selectedDate: null,
   activeTradeType: 'BUY',
-  accountFilter: 'ALL', // 'ALL', 'REAL', or 'DEMO'
+  accountFilter: 'REAL', // 'REAL' or 'DEMO'
   manualAccountType: 'REAL' // 'REAL' or 'DEMO' for manual trade entry
 };
 
@@ -172,11 +172,14 @@ function setupEventListeners() {
       await fetch('/api/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ starting_capital: newCapital })
+        body: JSON.stringify({ 
+          starting_capital: newCapital,
+          account_type: state.accountFilter
+        })
       });
       closeModal('capitalModal');
       await refreshDashboard();
-      showToast('Starting capital updated!', 'success');
+      showToast(`${state.accountFilter} Starting Capital updated!`, 'success');
     }
   });
 
@@ -239,7 +242,7 @@ async function loadConfig() {
 
 async function refreshDashboard() {
   try {
-    const filterParam = state.accountFilter !== 'ALL' ? `&account_type=${state.accountFilter}` : '';
+    const filterParam = `&account_type=${state.accountFilter}`;
 
     // Fetch Stats & Trades in parallel for 2x faster load
     const [statsRes, tradesRes] = await Promise.all([
@@ -272,7 +275,7 @@ function renderKpis() {
   const curr = '$';
   // 1. Starting Capital & Account Type (REAL / DEMO)
   document.getElementById('kpiStartingCapital').textContent = `${curr}${formatMoney(s.starting_capital)}`;
-  const accType = state.accountFilter !== 'ALL' ? state.accountFilter : (s.account_type || 'REAL');
+  const accType = state.accountFilter;
   const badgeEl = document.getElementById('kpiAccountTypeBadge');
   if (badgeEl) {
     badgeEl.textContent = accType;
@@ -280,7 +283,7 @@ function renderKpis() {
   }
   const accNameEl = document.getElementById('kpiAccountName');
   if (accNameEl) {
-    accNameEl.textContent = s.account_name || 'Base Account';
+    accNameEl.textContent = s.account_name || `${accType} Account`;
   }
 
   // 2. Monthly Net P&L
